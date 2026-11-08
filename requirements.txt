@@ -1,12 +1,14 @@
-torch
-optuna
-numpy
-pandas
-pyarrow
-scikit-learn
-scipy
-rapidfuzz
-pyyaml
-pillow
-matplotlib
-fonttools
+# Versions used for the paper's runs (Python 3.10.12). PyTorch was the CUDA 12.6 build:
+#   pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cu126
+torch==2.14.0
+optuna==5.0.0
+numpy==1.26.4
+pandas==2.3.3
+pyarrow==25.0.1
+scikit-learn==1.7.2
+scipy==1.15.3
+rapidfuzz==3.14.5
+pyyaml==6.0.3
+pillow==12.3.0
+matplotlib==3.10.9
+fonttools==4.65.0
