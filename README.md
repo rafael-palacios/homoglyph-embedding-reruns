@@ -82,9 +82,15 @@ export WORK=$HOME/make_results   # data, rendered images, runs and results go he
 ## 1. Python environment
 
 ```bash
-python3.11 -m venv ~/venvs/make && source ~/venvs/make/bin/activate
+python3.10 -m venv ~/venvs/make && source ~/venvs/make/bin/activate
+pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cu126
 pip install -r make/requirements.txt
 ```
+
+`requirements.txt` pins the versions used for the paper's runs: Python 3.10.12, PyTorch 2.14.0 with
+CUDA 12.6 and cuDNN 9.10.2, NVIDIA driver 580.178.04. The first `pip install` gets the CUDA 12.6 build of
+PyTorch; choose the build that matches your driver at pytorch.org. Other versions should work, but
+cuDNN and PyTorch versions change the last digits of the results (step 6).
 
 ## 2. Woodbridge partitions
 
