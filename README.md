@@ -278,3 +278,9 @@ paper.
   keeps 51,380, as the original runs did.
 - Woodbridge et al., *Detecting homoglyph attacks with a Siamese neural network*, IEEE Security and Privacy
   Workshops 2018. Their data: github.com/endgameinc/homoglyph.
+
+## License
+
+The scripts and results in this repository are released under the MIT License (see `LICENSE`). The
+paper's model and training code (github.com/setliu22/Itau) and Woodbridge's data
+(github.com/endgameinc/homoglyph, AGPL-3.0) are not part of this repository and keep their own terms.
