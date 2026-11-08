@@ -1,0 +1,46 @@
+# Frozen configuration: interaction_cnn on the synthetic benchmark ('new' in the code).
+# Best five-epoch screening trial of the paper (validation ROC-AUC 0.999828).
+# max_epochs and early_stopping_patience are set to the final-training protocol (25 epochs,
+# no early stopping). run_one.py overrides seed, and slice_width/stride for the sweep.
+activation: relu
+architecture: interaction_cnn
+background: black
+batch_size: 32
+conv_kernel_size: 3
+conv_layers: 2
+dataset: new
+dropout: 0.0
+early_stopping_min_delta: 0.0001
+early_stopping_patience: 25
+embedding_dim: 64
+font: DejaVu Sans
+image_height: 32
+interaction_activation: gelu
+interaction_channels: cosine
+interaction_classifier: mlp
+interaction_classifier_hidden: 32
+interaction_conv_layers: 1
+interaction_hidden_channels: 16
+interaction_kernel_size: 3
+interaction_normalization: masked_groupnorm_1group
+interaction_pooling: mean_max
+learning_rate: 0.0010235634280995824
+max_epochs: 25
+num_workers: 4
+pair_symmetry: average_interaction_map_and_transpose_logits
+pooling: mean
+processor: conv1d
+remove_padding: false
+seed: 7
+sequence_reduction: mean
+slice_width: 16
+stride: 16
+stride_mode: nonoverlap
+weight_decay: 0.0
+source:
+  repository: github.com/setliu22/Itau
+  commit: 4f93925
+  study: new_interaction_cnn
+  trial: 4
+  screening_validation_roc_auc: 0.9998279631763652
+  paper_trainable_parameters: 112001

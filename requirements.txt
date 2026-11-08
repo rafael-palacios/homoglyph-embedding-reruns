@@ -1,0 +1,12 @@
+torch
+optuna
+numpy
+pandas
+pyarrow
+scikit-learn
+scipy
+rapidfuzz
+pyyaml
+pillow
+matplotlib
+fonttools

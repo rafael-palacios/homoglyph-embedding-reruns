@@ -1,0 +1,47 @@
+# Frozen configuration: cross_attention_2block on the woodbridge benchmark ('nocom' in the code).
+# Best five-epoch screening trial of the paper (validation ROC-AUC 0.995493).
+# max_epochs and early_stopping_patience are set to the final-training protocol (25 epochs,
+# no early stopping). run_one.py overrides seed, and slice_width/stride for the sweep.
+activation: relu
+architecture: cross_attention_2block
+background: black
+batch_size: 64
+conv_kernel_size: 3
+conv_layers: 2
+cross_attention_activation: relu
+cross_attention_blocks: 2
+cross_attention_ffn_dim: 256
+cross_attention_ffn_ratio: 1
+cross_attention_has_ffn: true
+cross_attention_heads: 2
+dataset: nocom
+dropout: 0.1
+early_stopping_min_delta: 0.0001
+early_stopping_patience: 25
+embedding_dim: 256
+final_activation: relu
+final_head: symmetric_mlp
+final_hidden_dim: 512
+final_hidden_ratio: 2.0
+font: DejaVu Sans
+image_height: 32
+learning_rate: 0.0001121448093840093
+max_epochs: 25
+num_workers: 4
+pair_symmetry: symmetric_final_features_with_fixed_directional_input_roles
+pooling: mean
+processor: conv1d
+remove_padding: true
+seed: 7
+sequence_reduction: mean
+slice_width: 6
+stride: 3
+stride_mode: half_overlap
+weight_decay: 0.0001
+source:
+  repository: github.com/setliu22/Itau
+  commit: 4f93925
+  study: nocom_cross_attention_2block
+  trial: 4
+  screening_validation_roc_auc: 0.995493145113723
+  paper_trainable_parameters: 2190849

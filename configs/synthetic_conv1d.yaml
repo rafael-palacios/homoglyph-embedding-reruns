@@ -1,0 +1,41 @@
+# Frozen configuration: conv1d on the synthetic benchmark ('new' in the code).
+# Best five-epoch screening trial of the paper (validation ROC-AUC 0.998745).
+# max_epochs and early_stopping_patience are set to the final-training protocol (25 epochs,
+# no early stopping). run_one.py overrides seed, and slice_width/stride for the sweep.
+activation: relu
+architecture: conv1d
+background: black
+batch_size: 32
+conv_kernel_size: 3
+conv_layers: 3
+dataset: new
+dropout: 0.1
+early_stopping_min_delta: 0.0001
+early_stopping_patience: 25
+embedding_dim: 256
+final_activation: relu
+final_head: cosine_linear
+final_hidden_dim: 256
+final_hidden_ratio: null
+font: DejaVu Sans
+image_height: 32
+learning_rate: 0.0007792443849178462
+max_epochs: 25
+num_workers: 4
+pair_symmetry: shared_encoder_plus_symmetric_final_features
+pooling: attention
+processor: conv1d
+remove_padding: false
+seed: 7
+sequence_reduction: attention
+slice_width: 6
+stride: 6
+stride_mode: nonoverlap
+weight_decay: 0.0
+source:
+  repository: github.com/setliu22/Itau
+  commit: 4f93925
+  study: new_conv1d
+  trial: 1
+  screening_validation_roc_auc: 0.9987451201051406
+  paper_trainable_parameters: 541699
