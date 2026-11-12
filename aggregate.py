@@ -16,8 +16,8 @@
   slice_sweep.csv/.pdf    test and validation ROC-AUC against slice width (selected models, p0)
   fonts.csv               ROC-AUC on the test split rendered in unseen fonts
   process.csv             ROC-AUC on Woodbridge's process-name test split
-  controlled.csv          models on the shortcut-controlled test split (synthetic and Woodbridge), and
-                          synthetic models trained on it
+  controlled.csv          models on the shortcut-controlled test split (synthetic and Woodbridge), models
+                          trained on the controlled data, and those scored on the original test split
   det_curves.pdf          DET curves of the four models on each dataset (p0, first seed)
   report.txt              the text printed by this script
 
@@ -272,17 +272,20 @@ def other_evaluations(df: pd.DataFrame, res: Path) -> None:
             print(f"  trained on {r.family:15s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f}")
 
     ctrl = base[(base.family.isin(["synthetic", "woodbridge"]) & base.evaluation.isin(["test", "ctrl_test"]))
-                | ((base.family == "synthetic_ctrl") & (base.evaluation == "test"))]
-    ctrl = ctrl[ctrl.family.str.startswith("synthetic") | ctrl.run.isin(set(ctrl[ctrl.evaluation == "ctrl_test"].run))]
-    if (ctrl.evaluation == "ctrl_test").any() or (ctrl.family == "synthetic_ctrl").any():
+                | (base.family.isin(["synthetic_ctrl", "woodbridge_ctrl"]) & base.evaluation.isin(["test", "orig_test"]))]
+    ctrl = ctrl[ctrl.family.str.startswith("synthetic") | ctrl.family.str.endswith("_ctrl")
+                | ctrl.run.isin(set(ctrl[ctrl.evaluation == "ctrl_test"].run))]
+    if (ctrl.evaluation == "ctrl_test").any() or ctrl.family.str.endswith("_ctrl").any():
+        trained_ctrl = ctrl.family.str.endswith("_ctrl")
         c = ctrl.assign(dataset=ctrl.family.str.removesuffix("_ctrl"),
-                        setting=np.where(ctrl.family.str.endswith("_ctrl"), "trained and tested on controlled",
-                                         np.where(ctrl.evaluation == "ctrl_test", "trained on original, tested on controlled",
-                                                  "trained and tested on original")))
+                        setting=np.select([trained_ctrl & (ctrl.evaluation == "orig_test"), trained_ctrl,
+                                           ctrl.evaluation == "ctrl_test"],
+                                          ["trained on controlled, tested on original", "trained and tested on controlled",
+                                           "trained on original, tested on controlled"], "trained and tested on original"))
         c = mean_sd(c, ["dataset", "setting", "model"], ["roc_auc", "tpr_at_fpr_0.01", "accuracy_0_5"])
         c = c.sort_values(["dataset", "setting", "model"], key=lambda col: col.map(ORDER.index) if col.name == "model" else col)
         c.to_csv(res / "controlled.csv", index=False)
-        print("\nShortcut control (models scored on the controlled test split; synthetic models also retrained on it)")
+        print("\nShortcut control (models trained and scored on original or shortcut-controlled data)")
         for _, r in c.iterrows():
             print(f"  {r.dataset:11s} {r.setting:42s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f} (n={int(r.runs)})")
 
@@ -295,7 +298,7 @@ def other_evaluations(df: pd.DataFrame, res: Path) -> None:
 
 def det_curves(df: pd.DataFrame, res: Path) -> None:
     main = df[(df.evaluation == "test") & (df.variant == "paper") & (df.partition == 0)]
-    families = [f for f in ("woodbridge", "synthetic", "synthetic_ctrl") if f in set(main.family)]
+    families = [f for f in ("woodbridge", "woodbridge_ctrl", "synthetic", "synthetic_ctrl") if f in set(main.family)]
     if not families:
         return
     import matplotlib

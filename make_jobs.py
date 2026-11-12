@@ -14,6 +14,8 @@ Stages (see README.md):
   mechanism_eval  the mechanism models of p0 scored in unseen fonts and on the process-name test set
   woodbridge_ctrl_eval  Woodbridge models (main and mechanism; --models to choose) scored on the
              shortcut-controlled Woodbridge test split (make_controlled.py --source woodbridge)
+  woodbridge_ctrl  the 4 Woodbridge models trained on the shortcut-controlled Woodbridge data
+  woodbridge_ctrl_orig_eval  those models scored on the original Woodbridge test split
 
 Every command skips work that is already finished, so a job list can be re-run after an interruption.
 
@@ -53,7 +55,7 @@ def font_name(path: str) -> str:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("stage", choices=["main", "sweep", "ctrl", "fonts", "process", "ctrl_eval", "mechanism", "mechanism_eval",
-                                      "woodbridge_ctrl_eval"])
+                                      "woodbridge_ctrl_eval", "woodbridge_ctrl", "woodbridge_ctrl_orig_eval"])
     ap.add_argument("--partitions", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--seeds", type=int, nargs="+", default=[7, 1, 2, 3, 4])
     ap.add_argument("--widths", type=int, nargs="+", default=[4, 6, 8, 12, 16, 24, 32])
@@ -139,6 +141,17 @@ def main() -> int:
                 for m in args.models:
                     lines.append(evaluate(f"woodbridge_p{p}", m, seed,
                                           work / "data" / f"woodbridge_ctrl_p{p}" / "test.pkl", "ctrl_test"))
+    elif args.stage == "woodbridge_ctrl":
+        for p in args.partitions:
+            for seed in args.seeds:
+                for m in MODELS:
+                    lines.append(train(f"woodbridge_ctrl_p{p}", f"woodbridge_{m}", m, seed))
+    elif args.stage == "woodbridge_ctrl_orig_eval":
+        for p in args.partitions:
+            for seed in args.seeds:
+                for m in MODELS:
+                    lines.append(evaluate(f"woodbridge_ctrl_p{p}", m, seed,
+                                          work / "data" / f"woodbridge_p{p}" / "test.pkl", "orig_test"))
     print("\n".join(lines))
     print(f"{len(lines)} jobs", file=sys.stderr)
     return 0

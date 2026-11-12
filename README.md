@@ -15,7 +15,7 @@ preparation, job lists, evaluation and aggregation. The aggregated results repor
 | Independently collected data | `process` | Test ROC-AUC on Woodbridge's process-name test split |
 | Slice-width sensitivity | `sweep` | Selected model of each dataset with slice widths 4–32 px, 3 seeds |
 | What the Woodbridge gain comes from | `mechanism`, `mechanism_eval` | BiLSTM and Transformer (independent encoders of the same slices), one-block cross-attention (a pairwise model as small as the whole-image CNN) and a wide whole-image CNN (as large as two-block cross-attention); 3 partitions × 5 seeds |
-| Length, width and edit-distance cues | `subsets.py`, `make_controlled.py --source woodbridge`, `woodbridge_ctrl_eval` | Models and string baselines on test subsets without length or width differences and per edit distance; Woodbridge models on a shortcut-controlled Woodbridge test split |
+| Length, width and edit-distance cues | `subsets.py`, `make_controlled.py --source woodbridge`, `woodbridge_ctrl_eval`, `woodbridge_ctrl`, `woodbridge_ctrl_orig_eval` | Models and string baselines on test subsets without length or width differences and per edit distance; Woodbridge models on a shortcut-controlled Woodbridge test split, and retrained on the controlled data |
 
 ## The paper's code
 
@@ -199,7 +199,9 @@ python make/subsets.py --confusables $WORK/data/confusables.txt   # after the GP
 ```
 
 `--source woodbridge` applies the same control to the Woodbridge benchmark, whose negatives are also
-unmodified legitimate names; only its test split is used (`woodbridge_ctrl_eval` in step 7).
+unmodified legitimate names. The Woodbridge models are scored on its test split (`woodbridge_ctrl_eval` in
+step 7) and retrained on it (`woodbridge_ctrl`, then scored on the original test split with
+`woodbridge_ctrl_orig_eval`); build its render cache first (step 5, `--data woodbridge_ctrl_p0 ...`).
 
 `subsets.py` re-scores every finished evaluation from its saved scores, on subsets of the test pairs: pairs
 whose two names have the same number of characters, pairs whose rendered text widths differ by at most
@@ -270,6 +272,9 @@ bash make/run_gpu.sh $WORK/jobs/fonts.txt     # then process.txt and ctrl_eval.t
   python make/make_jobs.py mechanism_eval --seeds 7 1 2 3 4 > $WORK/jobs/mechanism_eval.txt
   python make/make_jobs.py woodbridge_ctrl_eval --partitions 0 1 2 --seeds 7 1 2 3 4 > $WORK/jobs/woodbridge_ctrl_eval.txt
   bash make/run_gpu.sh $WORK/jobs/mechanism_eval.txt   # then woodbridge_ctrl_eval.txt
+  python make/make_jobs.py woodbridge_ctrl --partitions 0 1 2 --seeds 7 1 2 > $WORK/jobs/woodbridge_ctrl.txt
+  python make/make_jobs.py woodbridge_ctrl_orig_eval --partitions 0 1 2 --seeds 7 1 2 > $WORK/jobs/woodbridge_ctrl_orig_eval.txt
+  bash make/run_gpu.sh $WORK/jobs/woodbridge_ctrl.txt  # then woodbridge_ctrl_orig_eval.txt
   ```
 
   The wide whole-image CNN is the slowest model (about 8 times the time per epoch of the others).
