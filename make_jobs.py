@@ -8,6 +8,10 @@ Stages (see README.md):
   fonts      main p0 runs scored on their test split in unseen fonts
   process    main p0 runs scored on Woodbridge's process-name test set (independent data)
   ctrl_eval  main synthetic runs scored on the controlled test split
+  mechanism  Woodbridge controls for the pairwise comparison: BiLSTM and Transformer (independent sequence
+             encoders), one-block cross-attention, and a whole-image CNN widened to the size of the
+             two-block cross-attention model; partitions x seeds
+  mechanism_eval  the mechanism models of p0 scored in unseen fonts and on the process-name test set
 
 Every command skips work that is already finished, so a job list can be re-run after an interruption.
 
@@ -25,6 +29,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 MODELS = ("interaction_cnn", "cross_attention_2block", "whole_image_cnn", "conv1d")
+# Woodbridge models added to separate the pairwise comparison from sequence encoding and capacity
+MECHANISM = ("bilstm", "transformer", "cross_attention_1block", "whole_image_cnn_wide")
 # The model selected for each dataset in the paper, and its stride mode, for the sweep
 SELECTED = {"woodbridge": ("interaction_cnn", "half"), "synthetic": ("cross_attention_2block", "full")}
 PAPER_WIDTH = {"woodbridge": 16, "synthetic": 6}
@@ -44,7 +50,7 @@ def font_name(path: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("stage", choices=["main", "sweep", "ctrl", "fonts", "process", "ctrl_eval"])
+    ap.add_argument("stage", choices=["main", "sweep", "ctrl", "fonts", "process", "ctrl_eval", "mechanism", "mechanism_eval"])
     ap.add_argument("--partitions", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--seeds", type=int, nargs="+", default=[7, 1, 2, 3, 4])
     ap.add_argument("--widths", type=int, nargs="+", default=[4, 6, 8, 12, 16, 24, 32])
@@ -110,6 +116,19 @@ def main() -> int:
                 for m in MODELS:
                     lines.append(evaluate(f"synthetic_p{p}", m, seed,
                                           work / "data" / f"synthetic_ctrl_p{p}" / "test.pkl", "ctrl_test"))
+    elif args.stage == "mechanism":
+        for p in args.partitions:
+            for seed in args.seeds:
+                for m in MECHANISM:
+                    lines.append(train(f"woodbridge_p{p}", f"woodbridge_{m}", m, seed))
+    elif args.stage == "mechanism_eval":
+        fonts = args.fonts or default_fonts(args.itau)
+        for seed in args.seeds:
+            for m in MECHANISM:
+                for font in fonts:
+                    lines.append(evaluate("woodbridge_p0", m, seed, work / "data" / "woodbridge_p0" / "test.pkl",
+                                          f"font_{font_name(font)}", font))
+                lines.append(evaluate("woodbridge_p0", m, seed, work / "data" / "process" / "test.pkl", "process"))
     print("\n".join(lines))
     print(f"{len(lines)} jobs", file=sys.stderr)
     return 0

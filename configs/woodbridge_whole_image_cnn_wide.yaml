@@ -1,0 +1,45 @@
+# Capacity control: whole_image_cnn on the woodbridge benchmark ('nocom' in the code), widened to about
+# 2.2 M trainable parameters, the size of the two-block cross-attention model (2.19 M). It is the
+# selected whole-image configuration (configs/woodbridge_whole_image_cnn.yaml) with 240 instead of 64
+# hidden channels; the other hyperparameters were not re-tuned for the wider model.
+# max_epochs and early_stopping_patience are set to the final-training protocol (25 epochs,
+# no early stopping). run_one.py overrides seed.
+activation: relu
+architecture: whole_image_cnn
+background: black
+batch_size: 128
+conv_kernel_size: 3
+conv_layers: 2
+dataset: nocom
+dropout: 0.1
+early_stopping_min_delta: 0.0001
+early_stopping_patience: 25
+embedding_dim: 128
+final_activation: relu
+final_head: symmetric_linear
+final_hidden_dim: 128
+final_hidden_ratio: null
+font: DejaVu Sans
+image_cnn_activation: relu
+image_cnn_hidden_channels: 240
+image_cnn_kernel_size: 5
+image_cnn_layers: 3
+image_cnn_pooling: max
+image_height: 32
+learning_rate: 0.0005018792957929306
+max_epochs: 25
+num_workers: 4
+pair_symmetry: shared_encoder_plus_symmetric_final_features
+processor: conv2d
+remove_padding: true
+seed: 7
+weight_decay: 0.0
+source:
+  repository: github.com/setliu22/Itau
+  commit: 4f93925
+  study: nocom_whole_image_cnn
+  trial: 1
+  screening_validation_roc_auc: 0.9914355111074812
+  paper_trainable_parameters: 309313
+  note: hidden channels widened from 64 to 240 (capacity control); all other values
+    as in the screening trial, not re-tuned

@@ -1,0 +1,44 @@
+# Frozen configuration: bilstm on the woodbridge benchmark ('nocom' in the code).
+# Best five-epoch screening trial of the paper (validation ROC-AUC 0.994414).
+# max_epochs and early_stopping_patience are set to the final-training protocol (25 epochs,
+# no early stopping). run_one.py overrides seed, and slice_width/stride for the sweep.
+activation: relu
+architecture: bilstm
+background: black
+batch_size: 64
+conv_kernel_size: 3
+conv_layers: 2
+dataset: nocom
+dropout: 0.1
+early_stopping_min_delta: 0.0001
+early_stopping_patience: 25
+embedding_dim: 128
+final_activation: relu
+final_head: symmetric_mlp
+final_hidden_dim: 128
+final_hidden_ratio: 1.0
+font: DejaVu Sans
+image_height: 32
+learning_rate: 0.0008460878931859466
+lstm_hidden_ratio: 0.5
+lstm_hidden_size: 64
+lstm_layers: 1
+max_epochs: 25
+num_workers: 4
+pair_symmetry: shared_encoder_plus_symmetric_final_features
+pooling: final_hidden
+processor: bilstm
+remove_padding: false
+seed: 7
+sequence_reduction: final_hidden
+slice_width: 16
+stride: 8
+stride_mode: half_overlap
+weight_decay: 1.0e-06
+source:
+  repository: github.com/setliu22/Itau
+  commit: 4f93925
+  study: nocom_bilstm
+  trial: 4
+  screening_validation_roc_auc: 0.9944137779130688
+  paper_trainable_parameters: 378369
