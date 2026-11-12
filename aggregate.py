@@ -4,14 +4,20 @@
   runs.csv                one row per run and evaluation (all metrics)
   main_summary.csv/.tex   test metrics, mean +/- s.d. over all partitions and seeds, per dataset and model
   by_partition.csv        the same per partition (mean over seeds), to separate data and seed variability
-  paired_tests.csv        paired comparisons between models on the same partition and seed: mean ROC-AUC
-                          difference, runs won, paired t-test and Wilcoxon test over runs, and the number of
-                          runs in which a per-run paired DeLong test is significant in either direction
+  paired_tests.csv        paired comparisons between models on the same test pairs (same partition and seed):
+                          mean ROC-AUC difference, runs won overall and in each partition, the number of runs
+                          in which a per-run paired DeLong test is significant in either direction, and two
+                          estimates that treat the partition, not the run, as the unit of replication (the 5
+                          seeds of a partition share its test pairs, so the 15 runs are not independent):
+                          a linear mixed model (difference ~ 1 + random partition intercept) and a t interval
+                          over the 3 partition means (2 degrees of freedom)
+  paired_by_partition.csv the paired differences per partition (mean and s.d. over seeds, runs won)
   delong_per_run.csv      the per-run DeLong tests
   slice_sweep.csv/.pdf    test and validation ROC-AUC against slice width (selected models, p0)
   fonts.csv               ROC-AUC on the test split rendered in unseen fonts
   process.csv             ROC-AUC on Woodbridge's process-name test split
-  controlled.csv          synthetic models on the shortcut-controlled test split, and models trained on it
+  controlled.csv          models on the shortcut-controlled test split (synthetic and Woodbridge), and
+                          synthetic models trained on it
   det_curves.pdf          DET curves of the four models on each dataset (p0, first seed)
   report.txt              the text printed by this script
 
@@ -31,17 +37,30 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import norm, rankdata, ttest_rel, wilcoxon
+from scipy.stats import norm, rankdata
+from scipy.stats import t as student_t
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
 LABELS = {"interaction_cnn": "Interaction CNN", "cross_attention_2block": "Two-block cross-attention",
-          "whole_image_cnn": "Whole-image CNN", "conv1d": "Conv1D"}
+          "whole_image_cnn": "Whole-image CNN", "conv1d": "Conv1D",
+          # Woodbridge controls for the pairwise comparison (make_jobs.py mechanism)
+          "bilstm": "BiLSTM", "transformer": "Transformer", "cross_attention_1block": "One-block cross-attention",
+          "whole_image_cnn_wide": "Whole-image CNN, wide"}
 ORDER = list(LABELS)
+MAIN_MODELS = ORDER[:4]
 PAIRS = [("interaction_cnn", "whole_image_cnn"), ("cross_attention_2block", "whole_image_cnn"),
          ("interaction_cnn", "cross_attention_2block"), ("whole_image_cnn", "conv1d"),
-         ("interaction_cnn", "conv1d"), ("cross_attention_2block", "conv1d")]
+         ("interaction_cnn", "conv1d"), ("cross_attention_2block", "conv1d"),
+         # pairwise comparison against independent sequence encoders with the same slices
+         ("interaction_cnn", "bilstm"), ("interaction_cnn", "transformer"),
+         ("bilstm", "whole_image_cnn"), ("transformer", "whole_image_cnn"),
+         # capacity: a pairwise model as small as the whole-image CNN, and a whole-image CNN as large as
+         # the two-block cross-attention model
+         ("cross_attention_1block", "whole_image_cnn"), ("cross_attention_2block", "cross_attention_1block"),
+         ("whole_image_cnn_wide", "whole_image_cnn"), ("cross_attention_2block", "whole_image_cnn_wide"),
+         ("interaction_cnn", "whole_image_cnn_wide"), ("cross_attention_1block", "whole_image_cnn_wide")]
 METRICS = ["roc_auc", "tpr_at_fpr_0.001", "tpr_at_fpr_0.01", "accuracy_0_5", "f1_0_5", "mcc_0_5"]
 
 
@@ -119,7 +138,7 @@ def main_tables(df: pd.DataFrame, res: Path) -> None:
 
 def paired_tests(df: pd.DataFrame, res: Path) -> None:
     main = df[(df.evaluation == "test") & (df.variant == "paper")]
-    per_run, summary = [], []
+    per_run, summary, by_partition = [], [], []
     for family in sorted(main.family.unique()):
         f = main[main.family == family].set_index(["partition", "seed", "model"])
         for a, b in PAIRS:
@@ -136,29 +155,63 @@ def paired_tests(df: pd.DataFrame, res: Path) -> None:
                                     auc_a=auc_a, auc_b=auc_b, diff=diff, delong_p=pval))
             d = pd.DataFrame([r for r in per_run if r["family"] == family and r["model_a"] == a and r["model_b"] == b])
             n = len(d)
-            t_p = ttest_rel(d.auc_a, d.auc_b).pvalue if n > 1 else float("nan")
-            w_p = wilcoxon(d["diff"]).pvalue if n > 5 and (d["diff"] != 0).any() else float("nan")
+            parts = d.groupby("partition")["diff"]
+            for p, g in parts:
+                by_partition.append(dict(family=family, model_a=a, model_b=b, partition=p, runs=len(g),
+                                         mean_diff=g.mean(), sd_diff=g.std(), runs_a_better=int((g > 0).sum())))
+            means = parts.mean()
+            k = len(means)
+            half = student_t.ppf(0.975, k - 1) * means.std() / np.sqrt(k) if k > 1 else float("nan")
             summary.append(dict(
-                family=family, model_a=a, model_b=b, runs=n,
+                family=family, model_a=a, model_b=b, runs=n, partitions=k,
                 mean_diff=d["diff"].mean(), sd_diff=d["diff"].std(),
-                ci95_low=d["diff"].mean() - 1.96 * d["diff"].std() / np.sqrt(n) if n > 1 else float("nan"),
-                ci95_high=d["diff"].mean() + 1.96 * d["diff"].std() / np.sqrt(n) if n > 1 else float("nan"),
                 runs_a_better=int((d["diff"] > 0).sum()),
+                runs_a_better_by_partition="/".join(str(int((g > 0).sum())) for _, g in parts),
+                partitions_a_better=int((means > 0).sum()),
                 delong_sig_a_better=int(((d.delong_p < 0.05) & (d["diff"] > 0)).sum()),
                 delong_sig_b_better=int(((d.delong_p < 0.05) & (d["diff"] < 0)).sum()),
-                paired_t_p=t_p, wilcoxon_p=w_p,
+                partition_mean_ci95_low=means.mean() - half, partition_mean_ci95_high=means.mean() + half,
+                **mixed_model(d),
             ))
     if not summary:
         return
     pd.DataFrame(per_run).to_csv(res / "delong_per_run.csv", index=False)
+    pd.DataFrame(by_partition).to_csv(res / "paired_by_partition.csv", index=False)
     s = pd.DataFrame(summary)
     s.to_csv(res / "paired_tests.csv", index=False)
     print("\nPaired comparisons on the test split (A - B in ROC-AUC, same partition and seed)")
+    print("  CI over partitions: t interval over the partition means (2 d.f.); mixed: random partition intercept")
     for _, r in s.iterrows():
-        print(f"  {r.family:15s} {LABELS[r.model_a]} vs {LABELS[r.model_b]}: diff {r.mean_diff:+.5f} "
-              f"[{r.ci95_low:+.5f}, {r.ci95_high:+.5f}], A better in {r.runs_a_better}/{r.runs} runs, "
-              f"DeLong p<0.05 for A/B in {r.delong_sig_a_better}/{r.delong_sig_b_better} runs, "
-              f"paired t p={r.paired_t_p:.3g}, Wilcoxon p={r.wilcoxon_p:.3g}")
+        print(f"  {r.family:15s} {LABELS[r.model_a]} vs {LABELS[r.model_b]}: diff {r.mean_diff:+.5f}, "
+              f"A better in {r.runs_a_better}/{r.runs} runs ({r.runs_a_better_by_partition} per partition), "
+              f"CI over partitions [{r.partition_mean_ci95_low:+.5f}, {r.partition_mean_ci95_high:+.5f}], "
+              f"mixed {r.mixed_diff:+.5f} [{r.mixed_ci95_low:+.5f}, {r.mixed_ci95_high:+.5f}] "
+              f"(partition s.d. {r.mixed_partition_sd:.5f}, seed s.d. {r.mixed_residual_sd:.5f}), "
+              f"DeLong p<0.05 for A/B in {r.delong_sig_a_better}/{r.delong_sig_b_better} runs")
+
+
+def mixed_model(d: pd.DataFrame) -> dict:
+    """Difference ~ 1 + random partition intercept (REML). With 3 partitions the partition variance is poorly
+    estimated, so the interval over partition means is reported as well."""
+    import warnings
+
+    import statsmodels.formula.api as smf
+
+    nan = dict(mixed_diff=float("nan"), mixed_se=float("nan"), mixed_ci95_low=float("nan"),
+               mixed_ci95_high=float("nan"), mixed_partition_sd=float("nan"), mixed_residual_sd=float("nan"))
+    if d.partition.nunique() < 2 or d["diff"].std() == 0:
+        return nan
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fit = smf.mixedlm("diff ~ 1", d.assign(diff=d["diff"] * 1000), groups=d.partition).fit(reml=True)
+        except (ValueError, np.linalg.LinAlgError):
+            return nan
+    low, high = fit.conf_int().loc["Intercept"]
+    return dict(mixed_diff=fit.fe_params["Intercept"] / 1000, mixed_se=fit.bse["Intercept"] / 1000,
+                mixed_ci95_low=low / 1000, mixed_ci95_high=high / 1000,
+                mixed_partition_sd=float(np.sqrt(max(fit.cov_re.iloc[0, 0], 0.0))) / 1000,
+                mixed_residual_sd=float(np.sqrt(fit.scale)) / 1000)
 
 
 def slice_sweep(df: pd.DataFrame, res: Path) -> None:
@@ -218,17 +271,20 @@ def other_evaluations(df: pd.DataFrame, res: Path) -> None:
         for _, r in p.iterrows():
             print(f"  trained on {r.family:15s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f}")
 
-    ctrl = base[((base.family == "synthetic") & base.evaluation.isin(["test", "ctrl_test"]))
+    ctrl = base[(base.family.isin(["synthetic", "woodbridge"]) & base.evaluation.isin(["test", "ctrl_test"]))
                 | ((base.family == "synthetic_ctrl") & (base.evaluation == "test"))]
+    ctrl = ctrl[ctrl.family.str.startswith("synthetic") | ctrl.run.isin(set(ctrl[ctrl.evaluation == "ctrl_test"].run))]
     if (ctrl.evaluation == "ctrl_test").any() or (ctrl.family == "synthetic_ctrl").any():
-        c = ctrl.assign(setting=np.where(ctrl.family == "synthetic_ctrl", "trained and tested on controlled",
+        c = ctrl.assign(dataset=ctrl.family.str.removesuffix("_ctrl"),
+                        setting=np.where(ctrl.family.str.endswith("_ctrl"), "trained and tested on controlled",
                                          np.where(ctrl.evaluation == "ctrl_test", "trained on original, tested on controlled",
                                                   "trained and tested on original")))
-        c = mean_sd(c, ["setting", "model"], ["roc_auc", "tpr_at_fpr_0.01", "accuracy_0_5"])
+        c = mean_sd(c, ["dataset", "setting", "model"], ["roc_auc", "tpr_at_fpr_0.01", "accuracy_0_5"])
+        c = c.sort_values(["dataset", "setting", "model"], key=lambda col: col.map(ORDER.index) if col.name == "model" else col)
         c.to_csv(res / "controlled.csv", index=False)
-        print("\nShortcut control (synthetic dataset)")
+        print("\nShortcut control (models scored on the controlled test split; synthetic models also retrained on it)")
         for _, r in c.iterrows():
-            print(f"  {r.setting:42s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f} (n={int(r.runs)})")
+            print(f"  {r.dataset:11s} {r.setting:42s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f} (n={int(r.runs)})")
 
     shortcut = res / "shortcut_baseline.csv"
     if shortcut.exists():
@@ -253,7 +309,7 @@ def det_curves(df: pd.DataFrame, res: Path) -> None:
     for ax, family in zip(axes[0], families):
         f = main[main.family == family]
         seed = sorted(f.seed)[0]
-        for model in ORDER:
+        for model in MAIN_MODELS:
             r = f[(f.model == model) & (f.seed == seed)]
             if r.empty:
                 continue

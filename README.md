@@ -9,11 +9,13 @@ preparation, job lists, evaluation and aggregation. The aggregated results repor
 | Experiment | Stage | What it produces |
 |---|---|---|
 | Variability over seeds and data partitions | `main` | 4 models × 2 datasets × 3 partitions × 5 seeds; mean ± s.d. |
-| Sliced models vs. whole-image CNN | `main` | Paired tests on the same partition and seed (DeLong per run; t-test and Wilcoxon across runs) |
+| Sliced models vs. whole-image CNN | `main` | Paired comparisons on the same partition and seed (DeLong per run; per partition; mixed model and interval over partitions) |
 | Unseen fonts | `fonts` | Test ROC-AUC with the test split rendered in 4 fonts not used in training |
 | Character-set shortcut | `shortcut_baseline.py`, `make_controlled.py`, `ctrl`, `ctrl_eval` | How far non-visual cues go; a shortcut-controlled version of the synthetic data; models tested on it and retrained on it |
 | Independently collected data | `process` | Test ROC-AUC on Woodbridge's process-name test split |
 | Slice-width sensitivity | `sweep` | Selected model of each dataset with slice widths 4–32 px, 3 seeds |
+| What the Woodbridge gain comes from | `mechanism`, `mechanism_eval` | BiLSTM and Transformer (independent encoders of the same slices), one-block cross-attention (a pairwise model as small as the whole-image CNN) and a wide whole-image CNN (as large as two-block cross-attention); 3 partitions × 5 seeds |
+| Length, width and edit-distance cues | `subsets.py`, `make_controlled.py --source woodbridge`, `woodbridge_ctrl_eval` | Models and string baselines on test subsets without length or width differences and per edit distance; Woodbridge models on a shortcut-controlled Woodbridge test split |
 
 ## The paper's code
 
@@ -33,6 +35,19 @@ seed, the partition and, in the sweep, the slice width change.
 | Two-block cross-attention (selected for synthetic in screening) | 6-px slices, stride 3 | 6-px slices, stride 6 |
 | Whole-image CNN (unsliced reference) | — | — |
 | Conv1D (sliced, no pair interaction) | 6-px slices | 6-px slices |
+
+The `mechanism` stage adds four Woodbridge models. BiLSTM, Transformer and one-block cross-attention use
+their best screening configurations (`nocom` studies; the Transformer from `nocom_transformer_max2`). The
+wide whole-image CNN is the paper's whole-image configuration with 240 instead of 64 hidden channels and
+nothing else changed (not re-tuned).
+
+| Model | Slices | Trainable parameters |
+|---|---|---|
+| BiLSTM (independent slice encoder, no pair interaction) | 16 px, stride 8 | 378,369 |
+| Transformer (independent slice encoder, no pair interaction) | 16 px, stride 8 | 527,489 |
+| One-block cross-attention | 6 px, stride 6 | 322,306 |
+| Whole-image CNN, wide | — | 2,214,865 |
+| *For comparison:* Interaction CNN / two-block cross-attention / whole-image CNN | | 301,793 / 2,190,849 / 309,313 |
 
 ## Resources
 
@@ -175,6 +190,25 @@ sets. Test ROC-AUC on p0:
 
 The full table is in `results/shortcut_baseline.csv`.
 
+### Woodbridge shortcut control and test subsets
+
+```bash
+for P in 0 1 2; do python make/make_controlled.py --partition $P --source woodbridge; done
+wget -P $WORK/data https://www.unicode.org/Public/security/latest/confusables.txt
+python make/subsets.py --confusables $WORK/data/confusables.txt   # after the GPU stages (step 7)
+```
+
+`--source woodbridge` applies the same control to the Woodbridge benchmark, whose negatives are also
+unmodified legitimate names; only its test split is used (`woodbridge_ctrl_eval` in step 7).
+
+`subsets.py` re-scores every finished evaluation from its saved scores, on subsets of the test pairs: pairs
+whose two names have the same number of characters, pairs whose rendered text widths differ by at most
+2 pixels (so the image width, the number of slices and the padding carry no class information), both, and
+pairs at Levenshtein distance 1, 2 and 3 or more. The same subsets are scored with string baselines: gradient
+boosting on the two lengths, on the two rendered widths, or on composition and edit-distance features, and
+the training-free distance between Unicode confusable skeletons (UTS #39). It writes
+`subsets_runs.csv`, `subsets_summary.csv` and `subsets_baselines.csv`.
+
 ## 5. Render caches (CPU, recommended)
 
 ```bash
@@ -228,6 +262,17 @@ bash make/run_gpu.sh $WORK/jobs/fonts.txt     # then process.txt and ctrl_eval.t
   training from its checkpoint fails with some PyTorch versions (`RNG state must be a torch.ByteTensor`);
   delete the run folder of an interrupted training so that it starts again from scratch.
 - On a SLURM cluster, submit each line of a job list as its own job instead.
+- The Woodbridge controls are separate stages, run after `main`:
+
+  ```bash
+  python make/make_jobs.py mechanism --partitions 0 1 2 --seeds 7 1 2 3 4 > $WORK/jobs/mechanism.txt
+  bash make/run_gpu.sh $WORK/jobs/mechanism.txt
+  python make/make_jobs.py mechanism_eval --seeds 7 1 2 3 4 > $WORK/jobs/mechanism_eval.txt
+  python make/make_jobs.py woodbridge_ctrl_eval --partitions 0 1 2 --seeds 7 1 2 3 4 > $WORK/jobs/woodbridge_ctrl_eval.txt
+  bash make/run_gpu.sh $WORK/jobs/mechanism_eval.txt   # then woodbridge_ctrl_eval.txt
+  ```
+
+  The wide whole-image CNN is the slowest model (about 8 times the time per epoch of the others).
 - The `fonts` stage uses DejaVu Serif, DejaVu Sans Mono and STIX General (shipped with matplotlib) and
   GNU Unifont (in the paper's repository). Other font files can be given with `--fonts a.ttf b.ttf ...`.
   Characters missing from a font are drawn as boxes, so the results are also given for the pairs that a
@@ -252,9 +297,10 @@ paper.
 |---|---|
 | `main_summary.csv`, `main_table.tex` | Test metrics, mean ± s.d. over 15 runs per model and dataset |
 | `by_partition.csv` | The same per partition, to separate data and seed variability |
-| `paired_tests.csv`, `delong_per_run.csv` | Paired comparisons between models on the same partition and seed |
+| `paired_tests.csv`, `paired_by_partition.csv`, `delong_per_run.csv` | Paired comparisons between models on the same partition and seed; per partition; with the partition as the unit of replication (mixed model, interval over partition means) |
+| `subsets_summary.csv`, `subsets_runs.csv`, `subsets_baselines.csv` | Models and string baselines on length-, width- and edit-distance subsets (`subsets.py`) |
 | `fonts.csv` | Unseen fonts |
-| `shortcut_baseline.csv`, `controlled.csv` | Non-visual baselines; models on the shortcut-controlled data |
+| `shortcut_baseline.csv`, `controlled.csv` | Non-visual baselines; models on the shortcut-controlled data (synthetic and Woodbridge) |
 | `process.csv` | Process-name test split |
 | `slice_sweep.csv`, `slice_sweep.pdf` | Slice-width sensitivity |
 | `det_curves.pdf` | DET curves (p0, seed 1) |
@@ -264,13 +310,14 @@ paper.
 
 | File | Purpose |
 |---|---|
-| `configs/*.yaml` | Frozen configurations of the 4 models on each dataset, from the paper's screening |
+| `configs/*.yaml` | Frozen configurations of the 4 models on each dataset and of the 4 Woodbridge controls, from the paper's screening |
 | `common.py` | Imports the paper's code, replaces its hard-coded paths, relaxes the slice-width check for the sweep, evaluation |
 | `make_partitions.py` | Woodbridge partitions, base files for the generator, process-name test split |
 | `prepare_synthetic.py` | Synthetic partitions: runs the paper's generator |
 | `run_generator.py` | Runs the paper's generator with a compact variant table (5.5 GB instead of ~72 GB) |
-| `make_controlled.py` | Shortcut-controlled synthetic partitions |
+| `make_controlled.py` | Shortcut-controlled synthetic and Woodbridge partitions |
 | `shortcut_baseline.py` | Non-visual baselines |
+| `subsets.py` | Models and string baselines on length-, width- and edit-distance subsets of the test pairs |
 | `build_caches.py` | Render caches |
 | `run_one.py` | Trains one model with one seed on one partition and scores it on the test split |
 | `evaluate.py` | Scores a trained model on other pairs or in another font |

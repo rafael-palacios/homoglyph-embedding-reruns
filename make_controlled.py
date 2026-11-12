@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build a shortcut-controlled version of a synthetic partition (character-set shortcut).
+"""Build a shortcut-controlled version of a data partition (character-set shortcut).
 
 In the synthetic dataset, positive candidates carry the non-ASCII substitutions, while negative candidates
 are unmodified legitimate names. A model can therefore separate the classes by looking only at the
-character set of the candidate. This script removes that cue: every negative candidate B (a legitimate
+character set of the candidate. The Woodbridge benchmark has the same cue to a lesser degree (its negatives
+are also legitimate names). This script removes that cue: every negative candidate B (a legitimate
 name paired with a different reference A) is replaced by a homoglyph-substituted copy B' of itself. B'
 still imitates B, not A, so the label stays 0.
 
@@ -16,11 +17,14 @@ The substitutions copy the positives:
     replacement with the frequency observed for that source character, so the negatives also get the
     positives' mix of Latin, non-Latin and NFKC-changing replacements.
 
-Writes data/synthetic_ctrl_p<k>/{train,validation,test}.pkl and control_report.json, which compares
-the non-ASCII distributions of both classes before and after.
+Writes data/<source>_ctrl_p<k>/{train,validation,test}.pkl and control_report.json, which compares
+the non-ASCII distributions of both classes before and after. The synthetic models are also retrained on
+the controlled data; for the Woodbridge benchmark only the controlled test split is used, to score the
+models trained on the original data.
 
 Example:
-  python make_controlled.py --partition 0
+  python make_controlled.py --partition 0                       # synthetic_ctrl_p0
+  python make_controlled.py --partition 0 --source woodbridge   # woodbridge_ctrl_p0
 """
 
 from __future__ import annotations
@@ -102,11 +106,12 @@ def histogram(values) -> dict[str, float]:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--partition", type=int, required=True)
+    ap.add_argument("--source", default="synthetic", choices=["synthetic", "woodbridge"])
     ap.add_argument("--work", default=None)
     args = ap.parse_args()
     work = common.work_root(args.work)
-    src = work / "data" / f"synthetic_p{args.partition}"
-    dst = work / "data" / f"synthetic_ctrl_p{args.partition}"
+    src = work / "data" / f"{args.source}_p{args.partition}"
+    dst = work / "data" / f"{args.source}_ctrl_p{args.partition}"
     data = {split: common.read_rows(src / f"{split}.pkl") for split in SPLITS}
 
     table = substitution_table(data["train"])
@@ -114,7 +119,7 @@ def main() -> int:
     print(f"{len(table)} source characters with substitutions; non-ASCII per positive candidate: "
           f"{histogram(non_ascii(c) for c, _, y in data['train'] if y == 1)}")
 
-    rng = np.random.default_rng(3000 + args.partition)
+    rng = np.random.default_rng((3000 if args.source == "synthetic" else 4000) + args.partition)
     report = {"substitution_sources": len(table), "splits": {}}
     for split in SPLITS:
         rows, out, shortfall = data[split], [], 0

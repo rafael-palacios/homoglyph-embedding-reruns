@@ -12,6 +12,8 @@ Stages (see README.md):
              encoders), one-block cross-attention, and a whole-image CNN widened to the size of the
              two-block cross-attention model; partitions x seeds
   mechanism_eval  the mechanism models of p0 scored in unseen fonts and on the process-name test set
+  woodbridge_ctrl_eval  Woodbridge models (main and mechanism; --models to choose) scored on the
+             shortcut-controlled Woodbridge test split (make_controlled.py --source woodbridge)
 
 Every command skips work that is already finished, so a job list can be re-run after an interruption.
 
@@ -50,11 +52,13 @@ def font_name(path: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("stage", choices=["main", "sweep", "ctrl", "fonts", "process", "ctrl_eval", "mechanism", "mechanism_eval"])
+    ap.add_argument("stage", choices=["main", "sweep", "ctrl", "fonts", "process", "ctrl_eval", "mechanism", "mechanism_eval",
+                                      "woodbridge_ctrl_eval"])
     ap.add_argument("--partitions", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--seeds", type=int, nargs="+", default=[7, 1, 2, 3, 4])
     ap.add_argument("--widths", type=int, nargs="+", default=[4, 6, 8, 12, 16, 24, 32])
     ap.add_argument("--fonts", nargs="+", default=None, help="font files for the fonts stage")
+    ap.add_argument("--models", nargs="+", default=list(MODELS + MECHANISM), help="models of woodbridge_ctrl_eval")
     ap.add_argument("--work", default=os.environ.get("WORK"))
     ap.add_argument("--itau", default=os.environ.get("ITAU"))
     args = ap.parse_args()
@@ -129,6 +133,12 @@ def main() -> int:
                     lines.append(evaluate("woodbridge_p0", m, seed, work / "data" / "woodbridge_p0" / "test.pkl",
                                           f"font_{font_name(font)}", font))
                 lines.append(evaluate("woodbridge_p0", m, seed, work / "data" / "process" / "test.pkl", "process"))
+    elif args.stage == "woodbridge_ctrl_eval":
+        for p in args.partitions:
+            for seed in args.seeds:
+                for m in args.models:
+                    lines.append(evaluate(f"woodbridge_p{p}", m, seed,
+                                          work / "data" / f"woodbridge_ctrl_p{p}" / "test.pkl", "ctrl_test"))
     print("\n".join(lines))
     print(f"{len(lines)} jobs", file=sys.stderr)
     return 0
