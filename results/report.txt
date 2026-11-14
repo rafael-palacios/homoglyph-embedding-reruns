@@ -1,4 +1,4 @@
-192 finished runs, 452 evaluations
+288 finished runs, 804 evaluations
 Test metrics, mean +/- s.d. over partitions and seeds
   synthetic       Interaction CNN            ROC-AUC 0.99986 +/- 0.00003  TPR@0.1%FPR 0.9968  acc 0.9981  (n=15)
   synthetic       Two-block cross-attention  ROC-AUC 0.99998 +/- 0.00001  TPR@0.1%FPR 0.9996  acc 0.9993  (n=15)
@@ -12,26 +12,51 @@ Test metrics, mean +/- s.d. over partitions and seeds
   woodbridge      Two-block cross-attention  ROC-AUC 0.99680 +/- 0.00017  TPR@0.1%FPR 0.8445  acc 0.9725  (n=15)
   woodbridge      Whole-image CNN            ROC-AUC 0.98751 +/- 0.00048  TPR@0.1%FPR 0.7601  acc 0.9417  (n=15)
   woodbridge      Conv1D                     ROC-AUC 0.89054 +/- 0.16130  TPR@0.1%FPR 0.2260  acc 0.8588  (n=15)
+  woodbridge      BiLSTM                     ROC-AUC 0.99444 +/- 0.00027  TPR@0.1%FPR 0.8137  acc 0.9626  (n=15)
+  woodbridge      Transformer                ROC-AUC 0.99240 +/- 0.00079  TPR@0.1%FPR 0.7767  acc 0.9561  (n=15)
+  woodbridge      One-block cross-attention  ROC-AUC 0.99634 +/- 0.00026  TPR@0.1%FPR 0.8364  acc 0.9713  (n=15)
+  woodbridge      Whole-image CNN, wide      ROC-AUC 0.98792 +/- 0.00042  TPR@0.1%FPR 0.7602  acc 0.9423  (n=15)
+  woodbridge_ctrl Interaction CNN            ROC-AUC 0.99369 +/- 0.00020  TPR@0.1%FPR 0.6402  acc 0.9610  (n=9)
+  woodbridge_ctrl Two-block cross-attention  ROC-AUC 0.99614 +/- 0.00016  TPR@0.1%FPR 0.7135  acc 0.9711  (n=9)
+  woodbridge_ctrl Whole-image CNN            ROC-AUC 0.98396 +/- 0.00063  TPR@0.1%FPR 0.4741  acc 0.9309  (n=9)
+  woodbridge_ctrl Conv1D                     ROC-AUC 0.88131 +/- 0.14077  TPR@0.1%FPR 0.2663  acc 0.8366  (n=9)
 
 Paired comparisons on the test split (A - B in ROC-AUC, same partition and seed)
-  synthetic       Interaction CNN vs Whole-image CNN: diff -0.00012 [-0.00013, -0.00010], A better in 0/15 runs, DeLong p<0.05 for A/B in 0/15 runs, paired t p=1.97e-10, Wilcoxon p=6.1e-05
-  synthetic       Two-block cross-attention vs Whole-image CNN: diff +0.00001 [-0.00000, +0.00002], A better in 10/15 runs, DeLong p<0.05 for A/B in 1/0 runs, paired t p=0.072, Wilcoxon p=0.107
-  synthetic       Interaction CNN vs Two-block cross-attention: diff -0.00013 [-0.00014, -0.00011], A better in 0/15 runs, DeLong p<0.05 for A/B in 0/15 runs, paired t p=1.98e-10, Wilcoxon p=6.1e-05
-  synthetic       Whole-image CNN vs Conv1D: diff +0.00910 [+0.00018, +0.01802], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=0.0653, Wilcoxon p=6.1e-05
-  synthetic       Interaction CNN vs Conv1D: diff +0.00898 [+0.00007, +0.01790], A better in 15/15 runs, DeLong p<0.05 for A/B in 13/0 runs, paired t p=0.0684, Wilcoxon p=6.1e-05
-  synthetic       Two-block cross-attention vs Conv1D: diff +0.00911 [+0.00019, +0.01802], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=0.065, Wilcoxon p=6.1e-05
-  synthetic_ctrl  Interaction CNN vs Whole-image CNN: diff -0.00008 [-0.00011, -0.00005], A better in 0/9 runs, DeLong p<0.05 for A/B in 0/6 runs, paired t p=0.000736, Wilcoxon p=0.00391
-  synthetic_ctrl  Two-block cross-attention vs Whole-image CNN: diff -0.00006 [-0.00009, -0.00002], A better in 1/9 runs, DeLong p<0.05 for A/B in 0/4 runs, paired t p=0.0123, Wilcoxon p=0.00781
-  synthetic_ctrl  Interaction CNN vs Two-block cross-attention: diff -0.00002 [-0.00006, +0.00002], A better in 4/9 runs, DeLong p<0.05 for A/B in 0/3 runs, paired t p=0.397, Wilcoxon p=0.82
-  synthetic_ctrl  Whole-image CNN vs Conv1D: diff +0.00206 [-0.00161, +0.00572], A better in 9/9 runs, DeLong p<0.05 for A/B in 9/0 runs, paired t p=0.303, Wilcoxon p=0.00391
-  synthetic_ctrl  Interaction CNN vs Conv1D: diff +0.00198 [-0.00169, +0.00566], A better in 9/9 runs, DeLong p<0.05 for A/B in 9/0 runs, paired t p=0.321, Wilcoxon p=0.00391
-  synthetic_ctrl  Two-block cross-attention vs Conv1D: diff +0.00200 [-0.00167, +0.00567], A better in 9/9 runs, DeLong p<0.05 for A/B in 8/0 runs, paired t p=0.317, Wilcoxon p=0.00391
-  woodbridge      Interaction CNN vs Whole-image CNN: diff +0.00636 [+0.00597, +0.00675], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=1.99e-14, Wilcoxon p=6.1e-05
-  woodbridge      Two-block cross-attention vs Whole-image CNN: diff +0.00928 [+0.00906, +0.00951], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=4.08e-20, Wilcoxon p=6.1e-05
-  woodbridge      Interaction CNN vs Two-block cross-attention: diff -0.00292 [-0.00327, -0.00258], A better in 0/15 runs, DeLong p<0.05 for A/B in 0/15 runs, paired t p=1.32e-10, Wilcoxon p=6.1e-05
-  woodbridge      Whole-image CNN vs Conv1D: diff +0.09697 [+0.01534, +0.17861], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=0.0354, Wilcoxon p=6.1e-05
-  woodbridge      Interaction CNN vs Conv1D: diff +0.10333 [+0.02187, +0.18480], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=0.0262, Wilcoxon p=6.1e-05
-  woodbridge      Two-block cross-attention vs Conv1D: diff +0.10626 [+0.02464, +0.18787], A better in 15/15 runs, DeLong p<0.05 for A/B in 15/0 runs, paired t p=0.023, Wilcoxon p=6.1e-05
+  CI over partitions: t interval over the partition means (2 d.f.); mixed: random partition intercept
+  synthetic       Interaction CNN vs Whole-image CNN: diff -0.00012, A better in 0/15 runs (0/0/0 per partition), CI over partitions [-0.00017, -0.00006], mixed -0.00012 [-0.00014, -0.00009] (partition s.d. 0.00002, seed s.d. 0.00002), DeLong p<0.05 for A/B in 0/15 runs
+  synthetic       Two-block cross-attention vs Whole-image CNN: diff +0.00001, A better in 10/15 runs (3/5/2 per partition), CI over partitions [-0.00001, +0.00003], mixed +0.00001 [-0.00000, +0.00002] (partition s.d. 0.00001, seed s.d. 0.00002), DeLong p<0.05 for A/B in 1/0 runs
+  synthetic       Interaction CNN vs Two-block cross-attention: diff -0.00013, A better in 0/15 runs (0/0/0 per partition), CI over partitions [-0.00016, -0.00009], mixed -0.00013 [-0.00015, -0.00010] (partition s.d. 0.00001, seed s.d. 0.00003), DeLong p<0.05 for A/B in 0/15 runs
+  synthetic       Whole-image CNN vs Conv1D: diff +0.00910, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.00014, +0.01834], mixed +0.00910 [+0.00018, +0.01802] (partition s.d. 0.00017, seed s.d. 0.01762), DeLong p<0.05 for A/B in 15/0 runs
+  synthetic       Interaction CNN vs Conv1D: diff +0.00898, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.00028, +0.01825], mixed +0.00898 [+0.00006, +0.01790] (partition s.d. 0.00016, seed s.d. 0.01762), DeLong p<0.05 for A/B in 13/0 runs
+  synthetic       Two-block cross-attention vs Conv1D: diff +0.00911, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.00013, +0.01835], mixed +0.00911 [+0.00019, +0.01802] (partition s.d. 0.00017, seed s.d. 0.01762), DeLong p<0.05 for A/B in 15/0 runs
+  synthetic_ctrl  Interaction CNN vs Whole-image CNN: diff -0.00008, A better in 0/9 runs (0/0/0 per partition), CI over partitions [-0.00019, +0.00004], mixed -0.00008 [-0.00013, -0.00003] (partition s.d. 0.00004, seed s.d. 0.00002), DeLong p<0.05 for A/B in 0/6 runs
+  synthetic_ctrl  Two-block cross-attention vs Whole-image CNN: diff -0.00006, A better in 1/9 runs (0/0/1 per partition), CI over partitions [-0.00012, +0.00000], mixed -0.00006 [-0.00009, -0.00002] (partition s.d. 0.00000, seed s.d. 0.00005), DeLong p<0.05 for A/B in 0/4 runs
+  synthetic_ctrl  Interaction CNN vs Two-block cross-attention: diff -0.00002, A better in 4/9 runs (2/1/1 per partition), CI over partitions [-0.00008, +0.00004], mixed -0.00002 [-0.00006, +0.00002] (partition s.d. 0.00000, seed s.d. 0.00006), DeLong p<0.05 for A/B in 0/3 runs
+  synthetic_ctrl  Whole-image CNN vs Conv1D: diff +0.00206, A better in 9/9 runs (3/3/3 per partition), CI over partitions [-0.00596, +0.01008], mixed +0.00206 [-0.00163, +0.00574] (partition s.d. 0.00039, seed s.d. 0.00560), DeLong p<0.05 for A/B in 9/0 runs
+  synthetic_ctrl  Interaction CNN vs Conv1D: diff +0.00198, A better in 9/9 runs (3/3/3 per partition), CI over partitions [-0.00614, +0.01011], mixed +0.00198 [-0.00170, +0.00566] (partition s.d. 0.00023, seed s.d. 0.00562), DeLong p<0.05 for A/B in 9/0 runs
+  synthetic_ctrl  Two-block cross-attention vs Conv1D: diff +0.00200, A better in 9/9 runs (3/3/3 per partition), CI over partitions [-0.00608, +0.01009], mixed +0.00200 [-0.00168, +0.00568] (partition s.d. 0.00030, seed s.d. 0.00561), DeLong p<0.05 for A/B in 8/0 runs
+  woodbridge      Interaction CNN vs Whole-image CNN: diff +0.00636, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00464, +0.00808], mixed +0.00636 [+0.00558, +0.00714] (partition s.d. 0.00065, seed s.d. 0.00055), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Two-block cross-attention vs Whole-image CNN: diff +0.00928, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00841, +0.01016], mixed +0.00928 [+0.00888, +0.00968] (partition s.d. 0.00032, seed s.d. 0.00035), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Interaction CNN vs Two-block cross-attention: diff -0.00292, A better in 0/15 runs (0/0/0 per partition), CI over partitions [-0.00380, -0.00205], mixed -0.00292 [-0.00337, -0.00248] (partition s.d. 0.00026, seed s.d. 0.00065), DeLong p<0.05 for A/B in 0/15 runs
+  woodbridge      Whole-image CNN vs Conv1D: diff +0.09697, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.01855, +0.21250], mixed +0.09697 [+0.01534, +0.17861] (partition s.d. 0.00071, seed s.d. 0.16131), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Interaction CNN vs Conv1D: diff +0.10333, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.01095, +0.21762], mixed +0.10333 [+0.02187, +0.18480] (partition s.d. 0.00069, seed s.d. 0.16097), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Two-block cross-attention vs Conv1D: diff +0.10626, A better in 15/15 runs (5/5/5 per partition), CI over partitions [-0.00876, +0.22127], mixed +0.10626 [+0.02464, +0.18787] (partition s.d. 0.00070, seed s.d. 0.16127), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Interaction CNN vs BiLSTM: diff -0.00056, A better in 3/15 runs (1/0/2 per partition), CI over partitions [-0.00169, +0.00056], mixed -0.00056 [-0.00108, -0.00005] (partition s.d. 0.00034, seed s.d. 0.00066), DeLong p<0.05 for A/B in 2/10 runs
+  woodbridge      Interaction CNN vs Transformer: diff +0.00147, A better in 13/15 runs (5/3/5 per partition), CI over partitions [-0.00048, +0.00341], mixed +0.00147 [+0.00058, +0.00235] (partition s.d. 0.00064, seed s.d. 0.00102), DeLong p<0.05 for A/B in 13/1 runs
+  woodbridge      BiLSTM vs Whole-image CNN: diff +0.00692, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00632, +0.00753], mixed +0.00692 [+0.00665, +0.00720] (partition s.d. 0.00018, seed s.d. 0.00036), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Transformer vs Whole-image CNN: diff +0.00489, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00397, +0.00581], mixed +0.00489 [+0.00443, +0.00535] (partition s.d. 0.00027, seed s.d. 0.00068), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      One-block cross-attention vs Whole-image CNN: diff +0.00882, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00761, +0.01004], mixed +0.00882 [+0.00827, +0.00938] (partition s.d. 0.00045, seed s.d. 0.00043), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Two-block cross-attention vs One-block cross-attention: diff +0.00046, A better in 14/15 runs (4/5/5 per partition), CI over partitions [-0.00006, +0.00098], mixed +0.00046 [+0.00022, +0.00070] (partition s.d. 0.00017, seed s.d. 0.00028), DeLong p<0.05 for A/B in 12/1 runs
+  woodbridge      Whole-image CNN, wide vs Whole-image CNN: diff +0.00041, A better in 11/15 runs (3/4/4 per partition), CI over partitions [+0.00023, +0.00059], mixed +0.00041 [+0.00017, +0.00065] (partition s.d. 0.00002, seed s.d. 0.00048), DeLong p<0.05 for A/B in 10/2 runs
+  woodbridge      Two-block cross-attention vs Whole-image CNN, wide: diff +0.00887, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00804, +0.00970], mixed +0.00887 [+0.00849, +0.00925] (partition s.d. 0.00029, seed s.d. 0.00037), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      Interaction CNN vs Whole-image CNN, wide: diff +0.00595, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00432, +0.00758], mixed +0.00595 [+0.00521, +0.00669] (partition s.d. 0.00060, seed s.d. 0.00060), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge      One-block cross-attention vs Whole-image CNN, wide: diff +0.00841, A better in 15/15 runs (5/5/5 per partition), CI over partitions [+0.00731, +0.00951], mixed +0.00841 [+0.00791, +0.00891] (partition s.d. 0.00040, seed s.d. 0.00040), DeLong p<0.05 for A/B in 15/0 runs
+  woodbridge_ctrl Interaction CNN vs Whole-image CNN: diff +0.00973, A better in 9/9 runs (3/3/3 per partition), CI over partitions [+0.00935, +0.01011], mixed +0.00973 [+0.00936, +0.01010] (partition s.d. 0.00001, seed s.d. 0.00057), DeLong p<0.05 for A/B in 9/0 runs
+  woodbridge_ctrl Two-block cross-attention vs Whole-image CNN: diff +0.01218, A better in 9/9 runs (3/3/3 per partition), CI over partitions [+0.01161, +0.01274], mixed +0.01218 [+0.01181, +0.01254] (partition s.d. 0.00001, seed s.d. 0.00056), DeLong p<0.05 for A/B in 9/0 runs
+  woodbridge_ctrl Interaction CNN vs Two-block cross-attention: diff -0.00244, A better in 0/9 runs (0/0/0 per partition), CI over partitions [-0.00263, -0.00225], mixed -0.00244 [-0.00259, -0.00230] (partition s.d. 0.00000, seed s.d. 0.00023), DeLong p<0.05 for A/B in 0/9 runs
+  woodbridge_ctrl Whole-image CNN vs Conv1D: diff +0.10265, A better in 9/9 runs (3/3/3 per partition), CI over partitions [+0.09601, +0.10928], mixed +0.10265 [+0.01080, +0.19449] (partition s.d. 0.00115, seed s.d. 0.14057), DeLong p<0.05 for A/B in 9/0 runs
+  woodbridge_ctrl Interaction CNN vs Conv1D: diff +0.11238, A better in 9/9 runs (3/3/3 per partition), CI over partitions [+0.10558, +0.11918], mixed +0.11238 [+0.02035, +0.20441] (partition s.d. 0.00115, seed s.d. 0.14085), DeLong p<0.05 for A/B in 9/0 runs
+  woodbridge_ctrl Two-block cross-attention vs Conv1D: diff +0.11482, A better in 9/9 runs (3/3/3 per partition), CI over partitions [+0.10798, +0.12167], mixed +0.11482 [+0.02286, +0.20679] (partition s.d. 0.00115, seed s.d. 0.14075), DeLong p<0.05 for A/B in 9/0 runs
 
 Slice-width sensitivity (p0; test ROC-AUC, mean +/- s.d. over seeds)
   synthetic       Two-block cross-attention  width  4 stride  4: 0.99999 +/- 0.00001 (validation 1.00000, n=3)
@@ -70,11 +95,21 @@ Unseen fonts (p0; 'test' is the training font DejaVu Sans; ROC-AUC on all pairs 
   synthetic       Whole-image CNN            font_stixgeneral             0.84313 +/- 0.00651 / 0.97541 (coverage 0.670)
   synthetic       Whole-image CNN            font_unifont_17_0_04         0.97882 +/- 0.00237 / 0.98736 (coverage 0.994)
   synthetic       Whole-image CNN            test                         0.99997 +/- 0.00001
+  woodbridge      BiLSTM                     font_dejavusansmono          0.90367 +/- 0.01191 / 0.90357 (coverage 0.998)
+  woodbridge      BiLSTM                     font_dejavuserif             0.81571 +/- 0.01795 / 0.81571 (coverage 1.000)
+  woodbridge      BiLSTM                     font_stixgeneral             0.74230 +/- 0.02141 / 0.74739 (coverage 0.924)
+  woodbridge      BiLSTM                     font_unifont_17_0_04         0.79288 +/- 0.01068 / 0.79288 (coverage 1.000)
+  woodbridge      BiLSTM                     test                         0.99428 +/- 0.00030
   woodbridge      Conv1D                     font_dejavusansmono          0.80147 +/- 0.15721 / 0.80148 (coverage 0.998)
   woodbridge      Conv1D                     font_dejavuserif             0.74982 +/- 0.15191 / 0.74982 (coverage 1.000)
   woodbridge      Conv1D                     font_stixgeneral             0.62963 +/- 0.16304 / 0.63424 (coverage 0.924)
   woodbridge      Conv1D                     font_unifont_17_0_04         0.66248 +/- 0.20481 / 0.66248 (coverage 1.000)
   woodbridge      Conv1D                     test                         0.94385 +/- 0.03666
+  woodbridge      One-block cross-attention  font_dejavusansmono          0.92599 +/- 0.01888 / 0.92593 (coverage 0.998)
+  woodbridge      One-block cross-attention  font_dejavuserif             0.87154 +/- 0.04485 / 0.87154 (coverage 1.000)
+  woodbridge      One-block cross-attention  font_stixgeneral             0.81803 +/- 0.00704 / 0.82849 (coverage 0.924)
+  woodbridge      One-block cross-attention  font_unifont_17_0_04         0.83859 +/- 0.03395 / 0.83859 (coverage 1.000)
+  woodbridge      One-block cross-attention  test                         0.99643 +/- 0.00026
   woodbridge      Two-block cross-attention  font_dejavusansmono          0.94050 +/- 0.01309 / 0.94037 (coverage 0.998)
   woodbridge      Two-block cross-attention  font_dejavuserif             0.87877 +/- 0.01699 / 0.87877 (coverage 1.000)
   woodbridge      Two-block cross-attention  font_stixgeneral             0.77890 +/- 0.01962 / 0.78849 (coverage 0.924)
@@ -85,35 +120,73 @@ Unseen fonts (p0; 'test' is the training font DejaVu Sans; ROC-AUC on all pairs 
   woodbridge      Interaction CNN            font_stixgeneral             0.75686 +/- 0.01756 / 0.76315 (coverage 0.924)
   woodbridge      Interaction CNN            font_unifont_17_0_04         0.83176 +/- 0.03386 / 0.83176 (coverage 1.000)
   woodbridge      Interaction CNN            test                         0.99406 +/- 0.00062
+  woodbridge      Transformer                font_dejavusansmono          0.88743 +/- 0.03022 / 0.88727 (coverage 0.998)
+  woodbridge      Transformer                font_dejavuserif             0.89760 +/- 0.02071 / 0.89760 (coverage 1.000)
+  woodbridge      Transformer                font_stixgeneral             0.80145 +/- 0.01570 / 0.80570 (coverage 0.924)
+  woodbridge      Transformer                font_unifont_17_0_04         0.83746 +/- 0.01824 / 0.83746 (coverage 1.000)
+  woodbridge      Transformer                test                         0.99232 +/- 0.00060
   woodbridge      Whole-image CNN            font_dejavusansmono          0.90064 +/- 0.02991 / 0.90049 (coverage 0.998)
   woodbridge      Whole-image CNN            font_dejavuserif             0.74816 +/- 0.05778 / 0.74816 (coverage 1.000)
   woodbridge      Whole-image CNN            font_stixgeneral             0.64173 +/- 0.02770 / 0.64562 (coverage 0.924)
   woodbridge      Whole-image CNN            font_unifont_17_0_04         0.68067 +/- 0.04153 / 0.68067 (coverage 1.000)
   woodbridge      Whole-image CNN            test                         0.98713 +/- 0.00037
+  woodbridge      Whole-image CNN, wide      font_dejavusansmono          0.88929 +/- 0.01379 / 0.88906 (coverage 0.998)
+  woodbridge      Whole-image CNN, wide      font_dejavuserif             0.74648 +/- 0.04348 / 0.74648 (coverage 1.000)
+  woodbridge      Whole-image CNN, wide      font_stixgeneral             0.64689 +/- 0.04091 / 0.65013 (coverage 0.924)
+  woodbridge      Whole-image CNN, wide      font_unifont_17_0_04         0.69467 +/- 0.06166 / 0.69467 (coverage 1.000)
+  woodbridge      Whole-image CNN, wide      test                         0.98762 +/- 0.00036
 
 Process-name test split (independent data; models trained on each dataset's p0)
   trained on synthetic       Conv1D                     ROC-AUC 0.52374 +/- 0.01189
   trained on synthetic       Two-block cross-attention  ROC-AUC 0.54459 +/- 0.02407
   trained on synthetic       Interaction CNN            ROC-AUC 0.53860 +/- 0.01589
   trained on synthetic       Whole-image CNN            ROC-AUC 0.53486 +/- 0.00576
+  trained on woodbridge      BiLSTM                     ROC-AUC 0.65018 +/- 0.03221
   trained on woodbridge      Conv1D                     ROC-AUC 0.53688 +/- 0.07204
+  trained on woodbridge      One-block cross-attention  ROC-AUC 0.75035 +/- 0.01716
   trained on woodbridge      Two-block cross-attention  ROC-AUC 0.75231 +/- 0.02136
   trained on woodbridge      Interaction CNN            ROC-AUC 0.72095 +/- 0.01159
+  trained on woodbridge      Transformer                ROC-AUC 0.71475 +/- 0.01075
   trained on woodbridge      Whole-image CNN            ROC-AUC 0.65029 +/- 0.01795
+  trained on woodbridge      Whole-image CNN, wide      ROC-AUC 0.66131 +/- 0.01634
 
-Shortcut control (synthetic dataset)
-  trained and tested on controlled           Conv1D                     ROC-AUC 0.99790 +/- 0.00561 (n=9)
-  trained and tested on controlled           Two-block cross-attention  ROC-AUC 0.99991 +/- 0.00005 (n=9)
-  trained and tested on controlled           Interaction CNN            ROC-AUC 0.99989 +/- 0.00003 (n=9)
-  trained and tested on controlled           Whole-image CNN            ROC-AUC 0.99996 +/- 0.00002 (n=9)
-  trained and tested on original             Conv1D                     ROC-AUC 0.99088 +/- 0.01762 (n=15)
-  trained and tested on original             Two-block cross-attention  ROC-AUC 0.99998 +/- 0.00001 (n=15)
-  trained and tested on original             Interaction CNN            ROC-AUC 0.99986 +/- 0.00003 (n=15)
-  trained and tested on original             Whole-image CNN            ROC-AUC 0.99998 +/- 0.00001 (n=15)
-  trained on original, tested on controlled  Conv1D                     ROC-AUC 0.99206 +/- 0.01532 (n=15)
-  trained on original, tested on controlled  Two-block cross-attention  ROC-AUC 0.83561 +/- 0.04679 (n=15)
-  trained on original, tested on controlled  Interaction CNN            ROC-AUC 0.99987 +/- 0.00003 (n=15)
-  trained on original, tested on controlled  Whole-image CNN            ROC-AUC 0.99997 +/- 0.00001 (n=15)
+Shortcut control (models trained and scored on original or shortcut-controlled data)
+  synthetic   trained and tested on controlled           Interaction CNN            ROC-AUC 0.99989 +/- 0.00003 (n=9)
+  synthetic   trained and tested on controlled           Two-block cross-attention  ROC-AUC 0.99991 +/- 0.00005 (n=9)
+  synthetic   trained and tested on controlled           Whole-image CNN            ROC-AUC 0.99996 +/- 0.00002 (n=9)
+  synthetic   trained and tested on controlled           Conv1D                     ROC-AUC 0.99790 +/- 0.00561 (n=9)
+  synthetic   trained and tested on original             Interaction CNN            ROC-AUC 0.99986 +/- 0.00003 (n=15)
+  synthetic   trained and tested on original             Two-block cross-attention  ROC-AUC 0.99998 +/- 0.00001 (n=15)
+  synthetic   trained and tested on original             Whole-image CNN            ROC-AUC 0.99998 +/- 0.00001 (n=15)
+  synthetic   trained and tested on original             Conv1D                     ROC-AUC 0.99088 +/- 0.01762 (n=15)
+  synthetic   trained on original, tested on controlled  Interaction CNN            ROC-AUC 0.99987 +/- 0.00003 (n=15)
+  synthetic   trained on original, tested on controlled  Two-block cross-attention  ROC-AUC 0.83561 +/- 0.04679 (n=15)
+  synthetic   trained on original, tested on controlled  Whole-image CNN            ROC-AUC 0.99997 +/- 0.00001 (n=15)
+  synthetic   trained on original, tested on controlled  Conv1D                     ROC-AUC 0.99206 +/- 0.01532 (n=15)
+  woodbridge  trained and tested on controlled           Interaction CNN            ROC-AUC 0.99369 +/- 0.00020 (n=9)
+  woodbridge  trained and tested on controlled           Two-block cross-attention  ROC-AUC 0.99614 +/- 0.00016 (n=9)
+  woodbridge  trained and tested on controlled           Whole-image CNN            ROC-AUC 0.98396 +/- 0.00063 (n=9)
+  woodbridge  trained and tested on controlled           Conv1D                     ROC-AUC 0.88131 +/- 0.14077 (n=9)
+  woodbridge  trained and tested on original             Interaction CNN            ROC-AUC 0.99387 +/- 0.00066 (n=15)
+  woodbridge  trained and tested on original             Two-block cross-attention  ROC-AUC 0.99680 +/- 0.00017 (n=15)
+  woodbridge  trained and tested on original             Whole-image CNN            ROC-AUC 0.98751 +/- 0.00048 (n=15)
+  woodbridge  trained and tested on original             Conv1D                     ROC-AUC 0.89054 +/- 0.16130 (n=15)
+  woodbridge  trained and tested on original             BiLSTM                     ROC-AUC 0.99444 +/- 0.00027 (n=15)
+  woodbridge  trained and tested on original             Transformer                ROC-AUC 0.99240 +/- 0.00079 (n=15)
+  woodbridge  trained and tested on original             One-block cross-attention  ROC-AUC 0.99634 +/- 0.00026 (n=15)
+  woodbridge  trained and tested on original             Whole-image CNN, wide      ROC-AUC 0.98792 +/- 0.00042 (n=15)
+  woodbridge  trained on controlled, tested on original  Interaction CNN            ROC-AUC 0.99189 +/- 0.00028 (n=9)
+  woodbridge  trained on controlled, tested on original  Two-block cross-attention  ROC-AUC 0.99494 +/- 0.00025 (n=9)
+  woodbridge  trained on controlled, tested on original  Whole-image CNN            ROC-AUC 0.98007 +/- 0.00065 (n=9)
+  woodbridge  trained on controlled, tested on original  Conv1D                     ROC-AUC 0.91152 +/- 0.08468 (n=9)
+  woodbridge  trained on original, tested on controlled  Interaction CNN            ROC-AUC 0.69668 +/- 0.01610 (n=15)
+  woodbridge  trained on original, tested on controlled  Two-block cross-attention  ROC-AUC 0.64176 +/- 0.01548 (n=15)
+  woodbridge  trained on original, tested on controlled  Whole-image CNN            ROC-AUC 0.62542 +/- 0.00704 (n=15)
+  woodbridge  trained on original, tested on controlled  Conv1D                     ROC-AUC 0.80291 +/- 0.21186 (n=15)
+  woodbridge  trained on original, tested on controlled  BiLSTM                     ROC-AUC 0.74491 +/- 0.02089 (n=15)
+  woodbridge  trained on original, tested on controlled  Transformer                ROC-AUC 0.64902 +/- 0.01097 (n=15)
+  woodbridge  trained on original, tested on controlled  One-block cross-attention  ROC-AUC 0.72514 +/- 0.01767 (n=15)
+  woodbridge  trained on original, tested on controlled  Whole-image CNN, wide      ROC-AUC 0.61897 +/- 0.00642 (n=15)
 
 Non-visual baselines (shortcut_baseline.py)
   woodbridge_p0          candidate_non_ascii  ROC-AUC 0.8220
@@ -131,3 +204,8 @@ Non-visual baselines (shortcut_baseline.py)
   synthetic_ctrl_p0      character_set        ROC-AUC 0.6820
   synthetic_ctrl_p0      lengths              ROC-AUC 0.9149
   synthetic_ctrl_p0      character_set_edit   ROC-AUC 0.9987
+  woodbridge_ctrl_p0     candidate_non_ascii  ROC-AUC 0.5033
+  woodbridge_ctrl_p0     candidate_character_set ROC-AUC 0.6144
+  woodbridge_ctrl_p0     character_set        ROC-AUC 0.6682
+  woodbridge_ctrl_p0     lengths              ROC-AUC 0.8763
+  woodbridge_ctrl_p0     character_set_edit   ROC-AUC 0.9834
