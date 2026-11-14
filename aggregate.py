@@ -43,6 +43,8 @@ from scipy.stats import t as student_t
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
 
+FAMILY_TITLES = {"woodbridge": "Woodbridge", "woodbridge_ctrl": "Woodbridge, controlled",
+                 "synthetic": "Synthetic", "synthetic_ctrl": "Synthetic, controlled"}  # figure titles
 LABELS = {"interaction_cnn": "Interaction CNN", "cross_attention_2block": "Two-block cross-attention",
           "whole_image_cnn": "Whole-image CNN", "conv1d": "Conv1D",
           # Woodbridge controls for the pairwise comparison (make_jobs.py mechanism)
@@ -243,7 +245,7 @@ def slice_sweep(df: pd.DataFrame, res: Path) -> None:
         ax.set_xticks(g.slice_width, [str(int(w)) for w in g.slice_width])
         ax.set_xlabel("Slice width (pixels)")
         ax.set_ylabel("ROC-AUC")
-        ax.set_title(f"{family}: {LABELS[g.model.iloc[0]]}")
+        ax.set_title(f"{FAMILY_TITLES.get(family, family)}: {LABELS[g.model.iloc[0]]}")
         ax.grid(alpha=0.3)
         ax.legend(fontsize=8)
     fig.tight_layout()
@@ -326,7 +328,7 @@ def det_curves(df: pd.DataFrame, res: Path) -> None:
         ax.axvline(norm.ppf(0.001), color="gray", lw=0.8, ls=":")
         ax.set_xlabel("False positive rate")
         ax.set_ylabel("False negative rate")
-        ax.set_title(f"{family} (p0, seed {seed})")
+        ax.set_title(f"{FAMILY_TITLES.get(family, family)} (p0, seed {seed})")
         ax.grid(alpha=0.3)
         ax.legend(fontsize=8)
     fig.tight_layout()
