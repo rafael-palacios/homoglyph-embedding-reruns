@@ -70,10 +70,18 @@ PAIRS = [("interaction_cnn", "whole_image_cnn"), ("cross_attention_2block", "who
          ("cross_attention_1block", "whole_image_cnn"), ("cross_attention_2block", "cross_attention_1block"),
          ("whole_image_cnn_wide", "whole_image_cnn"), ("cross_attention_2block", "whole_image_cnn_wide"),
          ("interaction_cnn", "whole_image_cnn_wide"), ("cross_attention_1block", "whole_image_cnn_wide")]
-# Runs trained on the larger 3g.71gb MIG slice (round 4, LargeGPU). Their training times are not comparable
-# with the others (1g.18gb slices) and are left out of the time columns.
-LARGE_SLICE = [("woodbridge_ctrl", "whole_image_cnn_wide", "paper"), ("woodbridge", "cross_attention_2block", "sw8_st4")]
 SELECTED = {"woodbridge": "interaction_cnn", "synthetic": "cross_attention_2block"}  # models of the width sweep
+
+
+def large_slice(df: pd.DataFrame) -> pd.Series:
+    """Runs trained on the larger 71 GB MIG slice: the width sweep and the four main models on the controlled
+    Woodbridge data (round 3), and the wide whole-image CNN on the controlled Woodbridge data and the two-block
+    cross-attention model at 8 px (round 4). Their training times are not comparable with those of the runs on
+    16-18 GB slices and are left out of the time columns."""
+    sweep = (df.variant != "paper") & (df.family.map(SELECTED) == df.model)
+    ctrl = (df.family == "woodbridge_ctrl") & df.model.isin(MAIN_MODELS + ["whole_image_cnn_wide"])
+    w8 = (df.family == "woodbridge") & (df.model == "cross_attention_2block") & (df.variant == "sw8_st4")
+    return sweep | ctrl | w8
 METRICS = ["roc_auc", "tpr_at_fpr_0.001", "tpr_at_fpr_0.01", "accuracy_0_5", "f1_0_5", "mcc_0_5"]
 
 
@@ -122,11 +130,9 @@ def collect(work: Path) -> pd.DataFrame:
         }
         rows.append(row)
     df = pd.DataFrame(rows)
-    large = np.zeros(len(df), dtype=bool)
-    for fam, model, variant in LARGE_SLICE:
-        large |= (df.family == fam) & (df.model == model) & (df.variant == variant)
-    df["gpu_slice"] = np.where(large, "3g.71gb", "1g.18gb")
-    df.loc[large, "training_hours"] = np.nan  # not comparable; see LARGE_SLICE
+    large = large_slice(df).to_numpy()
+    df["gpu_slice"] = np.where(large, "71 GB", "16-18 GB")
+    df.loc[large, "training_hours"] = np.nan  # not comparable; see large_slice()
     return df
 
 
@@ -288,7 +294,7 @@ def width8(df: pd.DataFrame, res: Path) -> None:
     t = t.sort_values(["order", "width"]).drop(columns="order")
     t.to_csv(res / "width8.csv", index=False)
     print("\nCommon slice width (Woodbridge p0, seeds " + " ".join(map(str, sorted(seeds))) +
-          "; selected width vs 8 px stride 4; hours blank for runs on the larger GPU slice)")
+          "; selected width vs 8 px stride 4; hours blank for runs on the 71 GB GPU slice)")
     for _, r in t.iterrows():
         hours = "" if pd.isna(r.training_hours_mean) else f", {r.training_hours_mean:.2f} h"
         print(f"  {LABELS[r.model]:26s} {int(r.slice_width):2d}/{int(r.stride):<2d} ROC-AUC {r.roc_auc_mean:.5f} +/- "

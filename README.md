@@ -300,7 +300,7 @@ bash make/run_gpu.sh $WORK/jobs/fonts.txt     # then process.txt and ctrl_eval.t
   | `r4_ctrl_orig_fonts` | Controlled-data Woodbridge models (p0) on the original test split in unseen fonts |
 
   The wide whole-image CNN on controlled data and the two-block cross-attention model at 8 px were trained
-  on a larger MIG slice (3g.71gb); `aggregate.py` leaves their training times out (`LARGE_SLICE`).
+  on a larger MIG slice (3g.71gb); `aggregate.py` leaves their training times out (`large_slice`), as it does for the width sweep and the round-3 retraining on the controlled Woodbridge data, which also ran on a 71 GB slice.
 - After a machine reset, `cleanup_interrupted.py <job list>` lists (and with `--delete` removes) the
   folders of the runs and evaluations of that list that were interrupted; only folders named in the list are
   touched, so runs of another machine on the same disk are safe.
