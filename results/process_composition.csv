@@ -1,0 +1,7 @@
+pairs,class,count,share_with_non_ascii,mean_non_ascii
+process/test,positive,178419,0.5900828947589662,0.9246885141156491
+process/test,negative,129102,0.0,0.0
+woodbridge_p0/test,positive,165141,0.6439951314331389,1.0711210420186386
+woodbridge_p0/test,negative,91745,0.0,0.0
+woodbridge_ctrl_p0/test,positive,165141,0.6439951314331389,1.0711210420186386
+woodbridge_ctrl_p0/test,negative,91745,0.6395770886696823,1.058455501662216
