@@ -332,6 +332,10 @@ paper.
 | `process_baselines.csv`, `process_composition.csv` | Non-visual baselines on process names, trained on the original or the controlled Woodbridge data; share of non-ASCII candidates per class (`process_baselines.py`) |
 | `width8.csv` | Woodbridge sliced models at a common slice width of 8 px against their selected widths |
 | `fonts_same_pairs.csv` | Original-data and controlled-data Woodbridge models on the same original test pairs, by font |
+| `string_baselines.csv`, `string_vs_visual.csv` | String-edit and skeleton baselines trained on the full training split of every partition; each visual model against the string-edit baseline, per partition and with a 95% interval over partitions (`round4_cpu.py`) |
+| `fusion.csv`, `fusion_runs.csv` | Visual, string-edit and cross-fitted combined scores on the same test pairs (`round4_cpu.py`) |
+| `overlap.csv` | Overlap of names between the training and test splits of every benchmark and partition (`round4_cpu.py`) |
+| `round4_cpu.log` | Text output of `round4_cpu.py` |
 | `slice_sweep.csv`, `slice_sweep.pdf` | Slice-width sensitivity |
 | `det_curves.pdf` | DET curves (p0, seed 1) |
 | `report.txt`, `runs.csv` | Everything above as text; one row per run and evaluation |
