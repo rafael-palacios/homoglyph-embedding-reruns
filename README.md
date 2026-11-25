@@ -349,6 +349,7 @@ paper.
 | `shortcut_baseline.py` | Non-visual baselines |
 | `subsets.py` | Models and string baselines on length-, width- and edit-distance subsets of the test pairs |
 | `process_baselines.py` | Does the process-name set carry the character-set shortcut? Composition and baselines |
+| `round4_cpu.py` | String baselines trained on the full training split of every partition, compared with the visual models; cross-fitted fusion of visual and string scores; overlap of names between splits |
 | `build_caches.py` | Render caches |
 | `run_one.py` | Trains one model with one seed on one partition and scores it on the test split |
 | `evaluate.py` | Scores a trained model on other pairs or in another font |
