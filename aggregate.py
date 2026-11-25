@@ -18,6 +18,12 @@
   process.csv             ROC-AUC on Woodbridge's process-name test split
   controlled.csv          models on the shortcut-controlled test split (synthetic and Woodbridge), models
                           trained on the controlled data, and those scored on the original test split
+  width8.csv              Woodbridge sliced models at a common slice width of 8 px, stride 4 (p0), next to the
+                          same models at their selected widths, same seeds
+  fonts_same_pairs.csv    Woodbridge models trained on original or on controlled data, scored on the SAME
+                          original test pairs (p0) in the training font and in unseen fonts, same seeds
+  process.csv             also on the ASCII-only candidates of the process-name set (no non-ASCII shortcut),
+                          when $WORK/data/process/test.pkl is present
   det_curves.pdf          DET curves of the four models on each dataset (p0, first seed)
   report.txt              the text printed by this script
 
@@ -39,6 +45,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm, rankdata
 from scipy.stats import t as student_t
+from sklearn.metrics import roc_auc_score
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common  # noqa: E402
@@ -63,6 +70,10 @@ PAIRS = [("interaction_cnn", "whole_image_cnn"), ("cross_attention_2block", "who
          ("cross_attention_1block", "whole_image_cnn"), ("cross_attention_2block", "cross_attention_1block"),
          ("whole_image_cnn_wide", "whole_image_cnn"), ("cross_attention_2block", "whole_image_cnn_wide"),
          ("interaction_cnn", "whole_image_cnn_wide"), ("cross_attention_1block", "whole_image_cnn_wide")]
+# Runs trained on the larger 3g.71gb MIG slice (round 4, LargeGPU). Their training times are not comparable
+# with the others (1g.18gb slices) and are left out of the time columns.
+LARGE_SLICE = [("woodbridge_ctrl", "whole_image_cnn_wide", "paper"), ("woodbridge", "cross_attention_2block", "sw8_st4")]
+SELECTED = {"woodbridge": "interaction_cnn", "synthetic": "cross_attention_2block"}  # models of the width sweep
 METRICS = ["roc_auc", "tpr_at_fpr_0.001", "tpr_at_fpr_0.01", "accuracy_0_5", "f1_0_5", "mcc_0_5"]
 
 
@@ -103,13 +114,20 @@ def collect(work: Path) -> pd.DataFrame:
             "seed": int(run.name.removeprefix("seed")), "evaluation": evaluation, "run": str(run),
             "best_validation_roc_auc": t["best_validation_roc_auc"], "best_epoch": t["best_epoch"],
             "parameters": t["trainable_parameter_count"], "training_hours": t["training_seconds"] / 3600,
+            "gpu_peak_memory_gb": t.get("gpu_peak_memory_bytes", float("nan")) / 2**30,
             "roc_auc": m["roc_auc"], "tpr_at_fpr_0.001": m["tpr_at_fpr_0.001"], "tpr_at_fpr_0.01": m["tpr_at_fpr_0.01"],
             "accuracy_0_5": m["at_0_5"]["accuracy"], "f1_0_5": m["at_0_5"]["f1"], "mcc_0_5": m["at_0_5"]["mcc"],
             "font_coverage": m.get("font_coverage"),
             "roc_auc_covered": m.get("covered_pairs", {}).get("roc_auc"),
         }
         rows.append(row)
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    large = np.zeros(len(df), dtype=bool)
+    for fam, model, variant in LARGE_SLICE:
+        large |= (df.family == fam) & (df.model == model) & (df.variant == variant)
+    df["gpu_slice"] = np.where(large, "3g.71gb", "1g.18gb")
+    df.loc[large, "training_hours"] = np.nan  # not comparable; see LARGE_SLICE
+    return df
 
 
 def mean_sd(frame: pd.DataFrame, keys: list[str], cols: list[str]) -> pd.DataFrame:
@@ -217,6 +235,8 @@ def mixed_model(d: pd.DataFrame) -> dict:
 
 
 def slice_sweep(df: pd.DataFrame, res: Path) -> None:
+    selected = df.family.map(SELECTED) == df.model
+    df = df[selected]
     sweep_models = df[(df.evaluation == "test") & (df.variant != "paper")][["family", "model"]].drop_duplicates()
     if sweep_models.empty:
         return
@@ -253,6 +273,52 @@ def slice_sweep(df: pd.DataFrame, res: Path) -> None:
     fig.savefig(res / "slice_sweep.png", dpi=200)
 
 
+def width8(df: pd.DataFrame, res: Path) -> None:
+    """Sliced Woodbridge models at a common width of 8 px (stride 4) against their selected widths (p0)."""
+    w8 = df[(df.family == "woodbridge") & (df.partition == 0) & (df.variant == "sw8_st4") & (df.evaluation == "test")]
+    if w8.empty:
+        return
+    seeds = set(w8.seed)
+    sel = df[(df.family == "woodbridge") & (df.partition == 0) & (df.variant == "paper") & (df.evaluation == "test")
+             & df.seed.isin(seeds) & df.model.isin(set(w8.model))]
+    both = pd.concat([sel.assign(width="selected"), w8.assign(width="8/4")])
+    cols = ["roc_auc", "tpr_at_fpr_0.001", "tpr_at_fpr_0.01", "training_hours", "gpu_peak_memory_gb", "parameters"]
+    t = mean_sd(both, ["model", "width", "slice_width", "stride"], cols)
+    t["order"] = t.model.map(ORDER.index)
+    t = t.sort_values(["order", "width"]).drop(columns="order")
+    t.to_csv(res / "width8.csv", index=False)
+    print("\nCommon slice width (Woodbridge p0, seeds " + " ".join(map(str, sorted(seeds))) +
+          "; selected width vs 8 px stride 4; hours blank for runs on the larger GPU slice)")
+    for _, r in t.iterrows():
+        hours = "" if pd.isna(r.training_hours_mean) else f", {r.training_hours_mean:.2f} h"
+        print(f"  {LABELS[r.model]:26s} {int(r.slice_width):2d}/{int(r.stride):<2d} ROC-AUC {r.roc_auc_mean:.5f} +/- "
+              f"{r.roc_auc_sd:.5f}  TPR@0.1%FPR {r['tpr_at_fpr_0.001_mean']:.4f}{hours} (n={int(r.runs)})")
+
+
+def fonts_same_pairs(df: pd.DataFrame, res: Path) -> None:
+    """Original-data and controlled-data Woodbridge models (p0) on the same original test pairs, by font."""
+    ctrl = df[(df.family == "woodbridge_ctrl") & (df.partition == 0) & (df.variant == "paper")
+              & ((df.evaluation == "orig_test") | df.evaluation.str.startswith("orig_font_"))]
+    if not ctrl.evaluation.str.startswith("orig_font_").any():
+        return
+    seeds = set(ctrl.seed)
+    orig = df[(df.family == "woodbridge") & (df.partition == 0) & (df.variant == "paper") & df.seed.isin(seeds)
+              & ((df.evaluation == "test") | df.evaluation.str.startswith("font_"))]
+    font = lambda e: "dejavusans (training)" if e in ("test", "orig_test") else e.removeprefix("orig_").removeprefix("font_")  # noqa: E731
+    both = pd.concat([orig.assign(trained_on="original"), ctrl.assign(trained_on="controlled")])
+    both = both.assign(font=both.evaluation.map(font))
+    t = mean_sd(both, ["model", "trained_on", "font"], ["roc_auc", "roc_auc_covered", "font_coverage"])
+    t["order"] = t.model.map(ORDER.index)
+    t = t.sort_values(["order", "font", "trained_on"], ascending=[True, True, False]).drop(columns="order")
+    t.to_csv(res / "fonts_same_pairs.csv", index=False)
+    print("\nUnseen fonts on the same original Woodbridge test pairs (p0, seeds " + " ".join(map(str, sorted(seeds))) +
+          "): trained on original -> trained on controlled data")
+    for (model, f), g in t.groupby(["model", "font"], sort=False):
+        o, c = g[g.trained_on == "original"], g[g.trained_on == "controlled"]
+        if len(o) and len(c):
+            print(f"  {LABELS[model]:26s} {f:24s} {o.roc_auc_mean.iloc[0]:.4f} -> {c.roc_auc_mean.iloc[0]:.4f}")
+
+
 def other_evaluations(df: pd.DataFrame, res: Path) -> None:
     base = df[df.variant == "paper"]
     font_runs = set(base[base.evaluation.str.startswith("font_")].run)
@@ -267,11 +333,30 @@ def other_evaluations(df: pd.DataFrame, res: Path) -> None:
 
     proc = base[base.evaluation == "process"]
     if not proc.empty:
-        p = mean_sd(proc, ["family", "model"], ["roc_auc", "tpr_at_fpr_0.01", "accuracy_0_5"])
+        cols = ["roc_auc", "tpr_at_fpr_0.01", "accuracy_0_5"]
+        pairs = res.parent / "data" / "process" / "test.pkl"
+        if pairs.exists():
+            # ASCII-only candidates: every negative of the process set, and the spoofs without non-ASCII
+            # characters, so that the candidate's character set does not reveal the class
+            rows = common.read_rows(pairs)
+            y = np.array([r[2] for r in rows])
+            keep = np.array([all(ord(ch) < 128 for ch in r[0]) for r in rows])
+            sub = []
+            for run in proc.run:
+                d = Path(run) / "evals" / "process"
+                labels = np.load(d / "labels.npy")
+                if not np.array_equal(labels, y):
+                    raise SystemExit(f"labels of {d} do not match {pairs}")
+                sub.append(roc_auc_score(y[keep], np.load(d / "scores.npy")[keep]))
+            proc = proc.assign(roc_auc_ascii_only=sub)
+            cols.append("roc_auc_ascii_only")
+            print(f"\nProcess names, ASCII-only candidates: {keep.sum()} pairs, {y[keep].sum()} positives")
+        p = mean_sd(proc, ["family", "model"], cols)
         p.to_csv(res / "process.csv", index=False)
         print("\nProcess-name test split (independent data; models trained on each dataset's p0)")
         for _, r in p.iterrows():
-            print(f"  trained on {r.family:15s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f}")
+            sub = f", ASCII-only {r.roc_auc_ascii_only_mean:.5f} +/- {r.roc_auc_ascii_only_sd:.5f}" if "roc_auc_ascii_only_mean" in r else ""
+            print(f"  trained on {r.family:15s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f}{sub}")
 
     ctrl = base[(base.family.isin(["synthetic", "woodbridge"]) & base.evaluation.isin(["test", "ctrl_test"]))
                 | (base.family.isin(["synthetic_ctrl", "woodbridge_ctrl"]) & base.evaluation.isin(["test", "orig_test"]))]
@@ -290,6 +375,14 @@ def other_evaluations(df: pd.DataFrame, res: Path) -> None:
         print("\nShortcut control (models trained and scored on original or shortcut-controlled data)")
         for _, r in c.iterrows():
             print(f"  {r.dataset:11s} {r.setting:42s} {LABELS[r.model]:26s} ROC-AUC {r.roc_auc_mean:.5f} +/- {r.roc_auc_sd:.5f} (n={int(r.runs)})")
+
+    for name, title in (("process_baselines.csv", "Non-visual baselines on process names (process_baselines.py)"),):
+        path = res / name
+        if path.exists():
+            print(f"\n{title}")
+            for _, r in pd.read_csv(path).iterrows():
+                sub = f", ASCII-only {r.ascii_only_roc_auc:.4f}" if "ascii_only_roc_auc" in r else ""
+                print(f"  trained on {r.trained_on:20s} {r.features:24s} ROC-AUC {r.test_roc_auc:.4f}{sub}")
 
     shortcut = res / "shortcut_baseline.csv"
     if shortcut.exists():
@@ -354,6 +447,8 @@ def main() -> int:
         main_tables(df, res)
         paired_tests(df, res)
         slice_sweep(df, res)
+        width8(df, res)
+        fonts_same_pairs(df, res)
         other_evaluations(df, res)
         det_curves(df, res)
     print(buffer.getvalue())

@@ -282,6 +282,28 @@ bash make/run_gpu.sh $WORK/jobs/fonts.txt     # then process.txt and ctrl_eval.t
   GNU Unifont (in the paper's repository). Other font files can be given with `--fonts a.ttf b.ttf ...`.
   Characters missing from a font are drawn as boxes, so the results are also given for the pairs that a
   font fully covers.
+- Round-4 stages (seeds 7 1 2 by default), written by `round4_jobs.sh` as one job list per machine so that
+  two machines sharing `$WORK` never share a list (`run_gpu.sh` keeps its counter in the list's log folder):
+
+  ```bash
+  bash make/round4_jobs.sh            # $WORK/jobs/r4_small.txt, r4_large.txt and r4_after.txt
+  python make/make_jobs.py r4_ctrl_orig_fonts > $WORK/jobs/r4_orig_fonts.txt
+  python make/process_baselines.py --train woodbridge_p0 woodbridge_ctrl_p0   # CPU
+  ```
+
+  | Stage | What it adds |
+  |---|---|
+  | `r4_ctrl_mechanism` | BiLSTM, Transformer, one-block cross-attention and wide whole-image CNN trained on the controlled Woodbridge data |
+  | `r4_ctrl_mechanism_orig_eval` | Those models on the original test split |
+  | `r4_width8` | Woodbridge sliced models at a common slice width of 8 px, stride 4 (p0) |
+  | `r4_ctrl_generalization` | Controlled-data models (p0) on their controlled test split in unseen fonts, and on process names |
+  | `r4_ctrl_orig_fonts` | Controlled-data Woodbridge models (p0) on the original test split in unseen fonts |
+
+  The wide whole-image CNN on controlled data and the two-block cross-attention model at 8 px were trained
+  on a larger MIG slice (3g.71gb); `aggregate.py` leaves their training times out (`LARGE_SLICE`).
+- After a machine reset, `cleanup_interrupted.py <job list>` lists (and with `--delete` removes) the
+  folders of the runs and evaluations of that list that were interrupted; only folders named in the list are
+  touched, so runs of another machine on the same disk are safe.
 
 Failed jobs of a job list:
 
@@ -306,7 +328,10 @@ paper.
 | `subsets_summary.csv`, `subsets_runs.csv`, `subsets_baselines.csv` | Models and string baselines on length-, width- and edit-distance subsets (`subsets.py`) |
 | `fonts.csv` | Unseen fonts |
 | `shortcut_baseline.csv`, `controlled.csv` | Non-visual baselines; models on the shortcut-controlled data (synthetic and Woodbridge) |
-| `process.csv` | Process-name test split |
+| `process.csv` | Process-name test split, also on its ASCII-only candidates (no non-ASCII shortcut) |
+| `process_baselines.csv`, `process_composition.csv` | Non-visual baselines on process names, trained on the original or the controlled Woodbridge data; share of non-ASCII candidates per class (`process_baselines.py`) |
+| `width8.csv` | Woodbridge sliced models at a common slice width of 8 px against their selected widths |
+| `fonts_same_pairs.csv` | Original-data and controlled-data Woodbridge models on the same original test pairs, by font |
 | `slice_sweep.csv`, `slice_sweep.pdf` | Slice-width sensitivity |
 | `det_curves.pdf` | DET curves (p0, seed 1) |
 | `report.txt`, `runs.csv` | Everything above as text; one row per run and evaluation |
@@ -323,10 +348,12 @@ paper.
 | `make_controlled.py` | Shortcut-controlled synthetic and Woodbridge partitions |
 | `shortcut_baseline.py` | Non-visual baselines |
 | `subsets.py` | Models and string baselines on length-, width- and edit-distance subsets of the test pairs |
+| `process_baselines.py` | Does the process-name set carry the character-set shortcut? Composition and baselines |
 | `build_caches.py` | Render caches |
 | `run_one.py` | Trains one model with one seed on one partition and scores it on the test split |
 | `evaluate.py` | Scores a trained model on other pairs or in another font |
 | `make_jobs.py`, `run_gpu.sh` | Job lists and a queue that keeps every GPU busy |
+| `round4_jobs.sh`, `cleanup_interrupted.py` | Round-4 job lists for two machines; cleanup after a machine reset |
 | `aggregate.py` | Tables, statistical tests and figures |
 
 ## Notes

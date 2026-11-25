@@ -165,7 +165,7 @@ def main() -> int:
     for metrics_path in sorted((work / "runs").glob("*/*/seed*/evals/*/metrics.json")):
         evaluation = metrics_path.parent.name
         run = metrics_path.parents[2]
-        if evaluation.startswith("font_") or "__" in run.parent.name:
+        if "font_" in evaluation or "__" in run.parent.name:  # font_* and orig_font_*
             continue  # font evaluations re-render the same pairs; sweep variants are not compared here
         recorded = Path(json.loads(metrics_path.read_text())["pairs"])
         data_path = work / "data" / recorded.parent.name / recorded.name  # also if WORK has moved
